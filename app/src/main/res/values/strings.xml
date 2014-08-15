@@ -5,5 +5,22 @@
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="navigation_drawer_open">drawer open</string>
+    <string name="navigation_drawer_close">drawer close</string>
+    <string name="my_fast_audio_title">Мои быстрые аудио ролики</string>
+    <string name="music_player_title">Музыкальный плеер</string>
+    <string name="video_player_title">Видео плеер</string>
+    <string name="menu_current_play">Сейчас играет</string>
+    <string name="menu_my_fast_tracks">Мои быстрые аудиозаписи</string>
+    <string name="menu_playlists_section_title">Плейлисты</string>
+    <string name="menu_music">Музыка</string>
+    <string name="menu_photo">Фото</string>
+    <string name="menu_video">Видео</string>
+    <string name="menu_playlists_by_time">Плейлисты по времени</string>
+    <string name="menu_about_section">О системе</string>
+    <string name="menu_settings">Настройки</string>
+    <string name="menu_about_app">О программе</string>
+    <string name="menu_object_selection">Выбор объекта</string>
+
 
 </resources>

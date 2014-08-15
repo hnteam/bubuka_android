@@ -25,7 +25,9 @@ public class BubukaApplication extends Application {
     private Crypto crypto;
     private DaoMaster.DevOpenHelper dbHelper;
     private DaoMaster daoMaster;
+    private DaoSession daoSession;
 
+    private HttpServer httpServer;
 
     @Override
     public void onCreate() {
@@ -39,11 +41,12 @@ public class BubukaApplication extends Application {
         super.onCreate();
 
 
-        new HttpServer().start();
+        httpServer = new HttpServer();
+        httpServer.start();
 
         dbHelper = new DaoMaster.DevOpenHelper(this, "db", null);
         daoMaster = new DaoMaster(dbHelper.getWritableDatabase());
-
+        daoSession = daoMaster.newSession();
     }
 
     public Crypto getCrypto() {
@@ -51,6 +54,6 @@ public class BubukaApplication extends Application {
     }
 
     public DaoSession getDaoSession() {
-        return daoMaster.newSession();
+        return daoSession;
     }
 }
