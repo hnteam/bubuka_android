@@ -91,6 +91,14 @@ public class SyncTask extends AsyncTask<SyncConfig, SyncTask.SyncProgressReport,
                 }
             }
 
+            for(FileObject fileObject : videoSyncList.getObjects()) {
+                syncFiles.add(new File(syncDirVideo, fileObject.getId() + "_" + fileObject.getVersion()));
+                SyncFileRequest syncRequest = new SyncFileRequest(syncConfig.getObjectCode(), "video", videoSyncList.getDomains(), syncDirVideo, fileObject);
+                if(!syncRequest.isExists()) {
+                    syncRequests.add(syncRequest);
+                }
+            }
+
             for(FileObject fileObject : photoSyncList.getObjects()) {
                 syncFiles.add(new File(syncDirPhoto, fileObject.getId() + "_" + fileObject.getVersion()));
                 SyncFileRequest syncRequest = new SyncFileRequest(syncConfig.getObjectCode(), "photo", photoSyncList.getDomains(), syncDirPhoto, fileObject);
@@ -99,13 +107,7 @@ public class SyncTask extends AsyncTask<SyncConfig, SyncTask.SyncProgressReport,
                 }
             }
 
-            for(FileObject fileObject : videoSyncList.getObjects()) {
-                syncFiles.add(new File(syncDirVideo, fileObject.getId() + "_" + fileObject.getVersion()));
-                SyncFileRequest syncRequest = new SyncFileRequest(syncConfig.getObjectCode(), "video", videoSyncList.getDomains(), syncDirVideo, fileObject);
-                if(!syncRequest.isExists()) {
-                    syncRequests.add(syncRequest);
-                }
-            }
+
 
 
             logger.info("total sync files {}, need download {}", syncFiles.size(), syncRequests.size());
@@ -141,13 +143,16 @@ public class SyncTask extends AsyncTask<SyncConfig, SyncTask.SyncProgressReport,
 
             StorageFileDao storageFileDao = BubukaApplication.getInstance().getDaoSession().getStorageFileDao();
             for(int i = 0; i < syncRequests.size(); i++) {
+                if(Thread.currentThread().isInterrupted()) {
+                    break;
+                }
+
                 publishProgress(new SyncProgressReport(syncRequests.size(), i, syncRequests.get(i).fileObject.getPath()));
                 if(syncRequests.get(i).runSync()) {
                     storageFileDao.insert(new StorageFile(null, syncRequests.get(i).type, syncRequests.get(i).fileObject.getId(), syncRequests.get(i).fileObject.getName(), syncRequests.get(i).fileObject.getPath(), syncRequests.get(i).fileObject.getVersion()));
                 }
             }
 
-            logger.info("debug interrupt, not implemented :(");
             return true;
         } catch (Exception e) {
             logger.error("failed to sync", e);
@@ -211,6 +216,10 @@ public class SyncTask extends AsyncTask<SyncConfig, SyncTask.SyncProgressReport,
                     int downloaded = 0;
                     int lastChunkReported = 0;
                     while(len > 0) {
+                        if(Thread.currentThread().isInterrupted()) {
+                            return false;
+                        }
+
                         cryptoStream.write(buffer, 0, len);
                         downloaded += len;
                         if(downloaded % 100000 > lastChunkReported) {
@@ -218,6 +227,10 @@ public class SyncTask extends AsyncTask<SyncConfig, SyncTask.SyncProgressReport,
                             lastChunkReported = downloaded % 100000;
                         }
                         len = inputStream.read(buffer, 0, buffer.length);
+
+                        if(Thread.currentThread().isInterrupted()) {
+                            return false;
+                        }
                     }
 
                     cryptoStream.close();
@@ -227,8 +240,6 @@ public class SyncTask extends AsyncTask<SyncConfig, SyncTask.SyncProgressReport,
                     logger.info("file download complete, rename {} to {}", tempFile.getAbsolutePath(), outputFile.getAbsoluteFile());
 
                     tempFile.renameTo(outputFile);
-
-
 
                     logger.info("sync file successfully completed");
                     return true;

@@ -1,16 +1,26 @@
 package ru.espepe.bubuka.player.service;
 
+import android.content.Context;
+
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.AsyncHttpResponseHandler;
+
+import org.apache.http.Header;
 import org.jsoup.Jsoup;
 import org.jsoup.parser.Parser;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.net.URL;
 import java.util.List;
 
 import ru.espepe.bubuka.player.log.Logger;
 import ru.espepe.bubuka.player.log.LoggerFactory;
 import ru.espepe.bubuka.player.pojo.Domain;
+import ru.espepe.bubuka.player.pojo.PlayList;
+import ru.espepe.bubuka.player.pojo.PlaylistsList;
 import ru.espepe.bubuka.player.pojo.SppConfig;
 import ru.espepe.bubuka.player.pojo.SyncList;
 import ru.espepe.bubuka.player.pojo.SyncListFiles;
@@ -79,5 +89,50 @@ public class BubukaApi {
         return new SppConfig(Jsoup.parse(inputStream, "UTF-8", "", Parser.xmlParser()));
     }
 
+    AsyncHttpClient http = new AsyncHttpClient();
 
+    public void getPreparedPlaylists(Context context, final RetrievePlaylistsListener listener) {
+        http.get(context, "http://"+domain+"/users/"+objectCode+"/player/?subaction=readylist", new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                try {
+                    PlaylistsList playlistsList = new PlaylistsList(Jsoup.parse(new ByteArrayInputStream(responseBody), "UTF-8", "", Parser.xmlParser()));
+                    listener.onPlaylistsSuccess(playlistsList.getPlayLists());
+                } catch (IOException e) {
+                    logger.error("failed to retrieve prepared playlists", e);
+                    listener.onPlaylistsFailed();
+                }
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                listener.onPlaylistsFailed();
+            }
+        });
+    }
+
+    public void getPlaylist(Context context, String type, final RetrievePlaylistsListener listener) {
+        http.get(context, "http://"+domain+"/users/"+objectCode+"/player/?subaction=own" + type, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                try {
+                    PlaylistsList playlistsList = new PlaylistsList(Jsoup.parse(new ByteArrayInputStream(responseBody), "UTF-8", "", Parser.xmlParser()));
+                    listener.onPlaylistsSuccess(playlistsList.getPlayLists());
+                } catch (IOException e) {
+                    logger.error("failed to retrieve playlists", e);
+                    listener.onPlaylistsFailed();
+                }
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                listener.onPlaylistsFailed();
+            }
+        });
+    }
+
+    public static interface RetrievePlaylistsListener {
+        void onPlaylistsSuccess(List<PlayList> playLists);
+        void onPlaylistsFailed();
+    }
 }

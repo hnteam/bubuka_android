@@ -29,7 +29,7 @@ import ru.espepe.bubuka.player.log.LoggerFactory;
 public class HttpServer implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(HttpServer.class);
 
-    private static final int SERVER_PORT = 47329;
+    public static final int SERVER_PORT = 47329;
 
     private volatile Thread thread;
     private ServerSocket serverSocket;

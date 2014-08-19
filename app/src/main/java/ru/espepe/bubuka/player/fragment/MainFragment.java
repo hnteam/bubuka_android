@@ -37,6 +37,11 @@ public class MainFragment extends Fragment {
     @InjectView(R.id.photo_counter) TextView photoCounter;
     @InjectView(R.id.video_counter) TextView videoCounter;
     @InjectView(R.id.music_counter) TextView musicCounter;
+
+    @OnClick(R.id.sync_status_line)
+    public void syncClick() {
+        ((MainActivity)getActivity()).startSync();
+    }
 /*
     @OnClick(R.id.button)
     protected void buttonOnClick() {

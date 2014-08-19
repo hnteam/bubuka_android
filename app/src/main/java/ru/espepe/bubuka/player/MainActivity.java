@@ -5,6 +5,7 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -90,6 +91,9 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
 
 
         gotoFragment(mainScreenFragment);
+
+        //startSync();
+
     }
 
     private void gotoFragment(Class<? extends Fragment> fragmentClazz) {
@@ -173,5 +177,50 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
     @Override
     public void onBackPressed() {
         gotoFragment(mainScreenFragment);
+    }
+
+    public void startSync() {
+        final ProgressDialog progressDialog = new ProgressDialog(MainActivity.this);
+
+        progressDialog.setIndeterminate(false);
+        progressDialog.setTitle("Sync");
+        progressDialog.setMessage("Media synchronization in progress...");
+        progressDialog.setMax(100);
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+
+
+
+        final SyncConfig config = new SyncConfig(getExternalFilesDir(null), "http://bubuka.espepe.ru/users/", "testobject12345");
+        final SyncTask task = new SyncTask() {
+            @Override
+            protected void onPostExecute(Boolean aBoolean) {
+                progressDialog.dismiss();
+
+                if(aBoolean) {
+                    Toast.makeText(MainActivity.this, "Sync successfully completed", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(MainActivity.this, "Sync failed", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            protected void onProgressUpdate(SyncProgressReport... values) {
+                SyncProgressReport progress = values[0];
+
+                progressDialog.setMax(progress.filesTotal);
+                progressDialog.setProgress(progress.filesComplete);
+                progressDialog.setMessage("Sync " + progress.currentFile);
+
+            }
+        };
+
+        task.execute(config);
+        progressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                task.cancel(true);
+            }
+        });
+        progressDialog.show();
     }
 }

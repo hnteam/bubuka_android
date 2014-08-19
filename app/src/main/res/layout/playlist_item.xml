@@ -3,7 +3,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="85dp" android:layout_height="85dp">
 
-    <ImageView
+    <com.loopj.android.image.SmartImageView
         android:background="@drawable/gray_border"
         android:layout_width="85dp"
         android:layout_height="85dp"
@@ -43,7 +43,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Сейчас играет"
-            android:id="@+id/textView"
+            android:id="@+id/player_video_title"
             android:layout_gravity="center_horizontal"
             android:textSize="8sp"
             android:textColor="#ffffff"
@@ -59,7 +59,7 @@
             android:src="@drawable/videoplayer_play"
             android:layout_centerHorizontal="true"
             android:layout_alignParentBottom="true"
-            android:layout_below="@+id/textView" />
+            android:layout_below="@+id/player_video_title" />
     </RelativeLayout>
 
 
