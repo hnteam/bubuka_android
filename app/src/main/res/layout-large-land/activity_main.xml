@@ -1,0 +1,23 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    tools:context="ru.espepe.bubuka.player.MainActivity">
+
+    <fragment
+        android:id="@+id/main_navigation_fragment"
+        android:name="ru.espepe.bubuka.player.fragment.NavigationFragment"
+        android:layout_width="250dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:layout_weight="25"/>
+    <FrameLayout
+        android:id="@+id/screen_fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="75">
+    </FrameLayout>
+</LinearLayout>
