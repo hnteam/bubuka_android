@@ -21,6 +21,7 @@
     <string name="menu_settings">Настройки</string>
     <string name="menu_about_app">О программе</string>
     <string name="menu_object_selection">Выбор объекта</string>
+    <string name="goto_register_demo_object"><u>Зарегистрировать демо-объект</u></string>
 
 
 </resources>

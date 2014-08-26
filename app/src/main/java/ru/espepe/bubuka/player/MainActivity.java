@@ -37,19 +37,19 @@ import ru.espepe.bubuka.player.adapter.NavigationAdapter;
 import ru.espepe.bubuka.player.dao.DaoSession;
 import ru.espepe.bubuka.player.dao.StorageFile;
 import ru.espepe.bubuka.player.dao.StorageFileDao;
+import ru.espepe.bubuka.player.fragment.MainFragment;
 import ru.espepe.bubuka.player.fragment.NavigationFragment;
 import ru.espepe.bubuka.player.fragment.screen.MainScreenFragment;
 import ru.espepe.bubuka.player.fragment.screen.PlaylistsScreenFragment;
 import ru.espepe.bubuka.player.fragment.screen.TimeTableScreenFragment;
 import ru.espepe.bubuka.player.log.Logger;
 import ru.espepe.bubuka.player.log.LoggerFactory;
-import ru.espepe.bubuka.player.pojo.SyncConfig;
 import ru.espepe.bubuka.player.service.BubukaApi;
 import ru.espepe.bubuka.player.service.BubukaServiceConnector;
 import ru.espepe.bubuka.player.service.SyncTask;
 
 
-public class MainActivity extends Activity implements NavigationAdapter.OnMenuItemListener {
+public class MainActivity extends Activity implements NavigationAdapter.OnMenuItemListener, SyncTask.OnProgressListener {
     private static final Logger logger = LoggerFactory.getLogger(MainActivity.class);
 
     private NavigationFragment navigationFragment;
@@ -64,12 +64,24 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if(BubukaApplication.getInstance().getObjectCode() == null) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_main);
         //getActionBar().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#e86f1c")));
 
 
-        navigationFragment = (NavigationFragment) getFragmentManager().findFragmentById(R.id.main_navigation_fragment);
-        navigationFragment.setUp(R.id.main_navigation_fragment, (DrawerLayout) findViewById(R.id.main_drawer_layout));
+        DrawerLayout drawerLayout = (DrawerLayout) findViewById(R.id.main_drawer_layout);
+
+        if(drawerLayout != null) {
+            navigationFragment = (NavigationFragment) getFragmentManager().findFragmentById(R.id.main_navigation_fragment);
+            navigationFragment.setUp(R.id.main_navigation_fragment, drawerLayout);
+        }
+
 
         mainScreenFragment = new MainScreenFragment();
         playlistsScreenFragment = new PlaylistsScreenFragment();
@@ -92,9 +104,13 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
 
         gotoFragment(mainScreenFragment);
 
+        BubukaApplication.getInstance().setSyncListener(this);
+
         //startSync();
 
     }
+
+
 
     private void gotoFragment(Class<? extends Fragment> fragmentClazz) {
         gotoFragment(fragmentClazz.getSimpleName());
@@ -122,7 +138,7 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
 
     @Override
     protected void onDestroy() {
-        //bubukaServiceConnector.onDestroy();
+        BubukaApplication.getInstance().removeSyncListener();
         super.onDestroy();
     }
 
@@ -180,6 +196,7 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
     }
 
     public void startSync() {
+        /*
         final ProgressDialog progressDialog = new ProgressDialog(MainActivity.this);
 
         progressDialog.setIndeterminate(false);
@@ -189,8 +206,7 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
         progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
 
 
-
-        final SyncConfig config = new SyncConfig(getExternalFilesDir(null), "http://bubuka.espepe.ru/users/", "testobject12345");
+        final SyncConfig config = new SyncConfig(BubukaApplication.getInstance().getBubukaFilesDir(), "http://bubuka.espepe.ru/users/", "testobject12345");
         final SyncTask task = new SyncTask() {
             @Override
             protected void onPostExecute(Boolean aBoolean) {
@@ -211,6 +227,8 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
                 progressDialog.setProgress(progress.filesComplete);
                 progressDialog.setMessage("Sync " + progress.currentFile);
 
+                mainScreenFragment.getMainFragment().updateView();
+
             }
         };
 
@@ -219,8 +237,27 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
             @Override
             public void onCancel(DialogInterface dialog) {
                 task.cancel(true);
+                mainScreenFragment.getMainFragment().updateView();
             }
         });
         progressDialog.show();
+        */
+
+        BubukaApplication.getInstance().toggleSync();
+    }
+
+    @Override
+    public void onProgress(SyncTask.SyncProgressReport progressReport) {
+        if(mainScreenFragment != null) {
+            MainFragment mainFragment = mainScreenFragment.getMainFragment();
+            if(mainFragment != null) {
+                mainFragment.receiveSyncProgress(progressReport);
+            }
+        }
+    }
+
+    @Override
+    public void onComplete(boolean success) {
+
     }
 }

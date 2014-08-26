@@ -13,13 +13,13 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         tools:layout="@layout/fragment_player"
-        android:layout_below="@+id/fragment2" />
+        android:layout_below="@+id/fragment_main" />
 
     <fragment
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:name="ru.espepe.bubuka.player.fragment.MainFragment"
-        android:id="@+id/fragment2"
+        android:id="@+id/fragment_main"
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"

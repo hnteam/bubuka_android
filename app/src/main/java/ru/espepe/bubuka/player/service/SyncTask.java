@@ -1,6 +1,8 @@
 package ru.espepe.bubuka.player.service;
 
 import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
 
 import com.facebook.crypto.Entity;
 
@@ -10,7 +12,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,27 +28,73 @@ import ru.espepe.bubuka.player.log.LoggerFactory;
 import ru.espepe.bubuka.player.pojo.Domain;
 import ru.espepe.bubuka.player.pojo.FileObject;
 import ru.espepe.bubuka.player.pojo.SppConfig;
-import ru.espepe.bubuka.player.pojo.SyncConfig;
 import ru.espepe.bubuka.player.pojo.SyncList;
 import ru.espepe.bubuka.player.pojo.SyncListFiles;
+import ru.espepe.bubuka.player.pojo.SyncStatus;
 
 /**
  * Created by wolong on 28/07/14.
  */
-public class SyncTask extends AsyncTask<SyncConfig, SyncTask.SyncProgressReport, Boolean> {
+public class SyncTask implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(SyncTask.class);
 
     private static final String DIR_NAME_PHOTO = "photo";
     private static final String DIR_NAME_MUSIC = "music";
     private static final String DIR_NAME_VIDEO = "video";
 
+    public static interface OnProgressListener {
+        void onProgress(SyncProgressReport progressReport);
+        void onComplete(boolean success);
+    }
+
+    private OnProgressListener listener;
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private Thread thread;
+
+    public SyncTask() {
+
+    }
+
+    public OnProgressListener getListener() {
+        return listener;
+    }
+
+    public void setListener(OnProgressListener listener) {
+        this.listener = listener;
+    }
+
+    public void start() {
+        if(thread == null) {
+            thread = new Thread(this);
+            thread.setName("SyncThread");
+            thread.start();
+        }
+    }
+
+    public void stop() {
+        if(thread != null) {
+            if(!thread.isInterrupted()) {
+                thread.interrupt();
+            }
+
+            thread = null;
+        }
+    }
+
+    public boolean isRunning() {
+        return thread != null && !thread.isInterrupted();
+    }
+
     @Override
-    protected Boolean doInBackground(SyncConfig... params) {
+    public void run() {
         try {
             logger.info("start sync...");
-            SyncConfig syncConfig = params[0];
 
-            BubukaApi api = new BubukaApi(syncConfig.getDomain(), syncConfig.getObjectCode());
+            publishProgress(new SyncProgressReport("start", Collections.EMPTY_LIST));
+
+            String domain = BubukaApplication.getInstance().getBubukaDomain();
+            String objectCode = BubukaApplication.getInstance().getObjectCode();
+            BubukaApi api = new BubukaApi(domain, objectCode);
 
             logger.info("retrive sync list...");
             SyncList syncList = api.findSyncList();
@@ -58,7 +108,7 @@ public class SyncTask extends AsyncTask<SyncConfig, SyncTask.SyncProgressReport,
             SyncListFiles musicSyncList = api.syncFiles(syncList.getDomains(), "music");
 
             logger.info("checking directory availability...");
-            File syncDirBase = syncConfig.getSyncDirectory();
+            File syncDirBase = BubukaApplication.getInstance().getBubukaFilesDir();
             File syncDirPhoto = new File(syncDirBase, DIR_NAME_PHOTO);
             File syncDirVideo = new File(syncDirBase, DIR_NAME_VIDEO);
             File syncDirMusic = new File(syncDirBase, DIR_NAME_MUSIC);
@@ -85,7 +135,7 @@ public class SyncTask extends AsyncTask<SyncConfig, SyncTask.SyncProgressReport,
 
             for(FileObject fileObject : musicSyncList.getObjects()) {
                 syncFiles.add(new File(syncDirMusic, fileObject.getId() + "_" + fileObject.getVersion()));
-                SyncFileRequest syncRequest = new SyncFileRequest(syncConfig.getObjectCode(), "music", musicSyncList.getDomains(), syncDirMusic, fileObject);
+                SyncFileRequest syncRequest = new SyncFileRequest(objectCode, "music", musicSyncList.getDomains(), syncDirMusic, fileObject);
                 if(!syncRequest.isExists()) {
                     syncRequests.add(syncRequest);
                 }
@@ -93,7 +143,7 @@ public class SyncTask extends AsyncTask<SyncConfig, SyncTask.SyncProgressReport,
 
             for(FileObject fileObject : videoSyncList.getObjects()) {
                 syncFiles.add(new File(syncDirVideo, fileObject.getId() + "_" + fileObject.getVersion()));
-                SyncFileRequest syncRequest = new SyncFileRequest(syncConfig.getObjectCode(), "video", videoSyncList.getDomains(), syncDirVideo, fileObject);
+                SyncFileRequest syncRequest = new SyncFileRequest(objectCode, "video", videoSyncList.getDomains(), syncDirVideo, fileObject);
                 if(!syncRequest.isExists()) {
                     syncRequests.add(syncRequest);
                 }
@@ -101,14 +151,14 @@ public class SyncTask extends AsyncTask<SyncConfig, SyncTask.SyncProgressReport,
 
             for(FileObject fileObject : photoSyncList.getObjects()) {
                 syncFiles.add(new File(syncDirPhoto, fileObject.getId() + "_" + fileObject.getVersion()));
-                SyncFileRequest syncRequest = new SyncFileRequest(syncConfig.getObjectCode(), "photo", photoSyncList.getDomains(), syncDirPhoto, fileObject);
+                SyncFileRequest syncRequest = new SyncFileRequest(objectCode, "photo", photoSyncList.getDomains(), syncDirPhoto, fileObject);
                 if(!syncRequest.isExists()) {
                     syncRequests.add(syncRequest);
                 }
             }
 
 
-
+            Collections.shuffle(syncRequests);
 
             logger.info("total sync files {}, need download {}", syncFiles.size(), syncRequests.size());
 
@@ -116,7 +166,17 @@ public class SyncTask extends AsyncTask<SyncConfig, SyncTask.SyncProgressReport,
             File[] videoFilesExists = syncDirVideo.listFiles();
             File[] musicFilesExists = syncDirMusic.listFiles();
 
+            StorageFileDao storageFileDao = BubukaApplication.getInstance().getDaoSession().getStorageFileDao();
+            List<StorageFile> storageFiles = storageFileDao.queryBuilder().build().forCurrentThread().list();
+
             logger.info("total files exists: photo {}, video {}, music {}", photoFilesExists.length, videoFilesExists.length, musicFilesExists.length);
+
+            for(StorageFile storageFile : storageFiles) {
+                File file = getFileForStorageFile(storageFile);
+                if(!file.exists()) {
+                    storageFileDao.deleteInTx(storageFile);
+                }
+            }
 
             for(File currentFile : photoFilesExists) {
                 if(!syncFiles.contains(currentFile)) {
@@ -141,38 +201,75 @@ public class SyncTask extends AsyncTask<SyncConfig, SyncTask.SyncProgressReport,
 
             logger.info("start downloading {} files", syncRequests.size());
 
-            StorageFileDao storageFileDao = BubukaApplication.getInstance().getDaoSession().getStorageFileDao();
             for(int i = 0; i < syncRequests.size(); i++) {
                 if(Thread.currentThread().isInterrupted()) {
-                    break;
+                    publishProgress(new SyncProgressReport("stop", Collections.EMPTY_LIST));
+                    BubukaApplication.getInstance().setSyncStatus(new SyncStatus(SyncStatus.SyncStatusType.INTERRUPTED));
+                    return;
                 }
 
-                publishProgress(new SyncProgressReport(syncRequests.size(), i, syncRequests.get(i).fileObject.getPath()));
                 if(syncRequests.get(i).runSync()) {
-                    storageFileDao.insert(new StorageFile(null, syncRequests.get(i).type, syncRequests.get(i).fileObject.getId(), syncRequests.get(i).fileObject.getName(), syncRequests.get(i).fileObject.getPath(), syncRequests.get(i).fileObject.getVersion()));
+                    storageFileDao.insertInTx(new StorageFile(null, syncRequests.get(i).type, syncRequests.get(i).fileObject.getId(), syncRequests.get(i).fileObject.getName(), syncRequests.get(i).fileObject.getPath(), syncRequests.get(i).fileObject.getVersion()));
+                } else {
+                    publishProgress(new SyncProgressReport("stop", Collections.EMPTY_LIST));
+                    BubukaApplication.getInstance().setSyncStatus(new SyncStatus(SyncStatus.SyncStatusType.INTERRUPTED));
+                    return;
                 }
             }
 
-            return true;
+            publishProgress(new SyncProgressReport("stop", Collections.EMPTY_LIST));
+            BubukaApplication.getInstance().setSyncStatus(new SyncStatus(SyncStatus.SyncStatusType.COMPLETED));
         } catch (Exception e) {
             logger.error("failed to sync", e);
-            return false;
+            publishProgress(new SyncProgressReport("stop", Collections.EMPTY_LIST));
+            BubukaApplication.getInstance().setSyncStatus(new SyncStatus(SyncStatus.SyncStatusType.INTERRUPTED));
+        }
+    }
+
+    private File getFileForStorageFile(StorageFile storageFile) {
+        return new File(new File(BubukaApplication.getInstance().getFilesDir(), storageFile.getType()), storageFile.getId() + "_" + storageFile.getVersion());
+    }
+
+    private void publishProgress(final SyncProgressReport progressReport) {
+        if(listener != null) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    listener.onProgress(progressReport);
+                }
+            });
         }
     }
 
     public static class SyncProgressReport {
-        public int filesTotal;
-        public int filesComplete;
-        public String currentFile;
+        public String type;
+        //public int filesTotal;
+        //public int filesComplete;
+        public List<SyncFileProgressReport> filesInProgress;
 
-        public SyncProgressReport(int filesTotal, int filesComplete, String currentFile) {
-            this.filesTotal = filesTotal;
-            this.filesComplete = filesComplete;
-            this.currentFile = currentFile;
+        public SyncProgressReport(String type, List<SyncFileProgressReport> filesInProgress) {
+            this.type = type;
+            //this.filesTotal = filesTotal;
+            //this.filesComplete = filesComplete;
+            this.filesInProgress = filesInProgress;
         }
     }
 
-    private static class SyncFileRequest {
+    public static class SyncFileProgressReport {
+        public String type;
+        public String fileType;
+        public long bytesTotal;
+        public long bytesDownloaded;
+
+        public SyncFileProgressReport(String type, String fileType, long bytesTotal, long bytesDownloaded) {
+            this.type = type;
+            this.fileType = fileType;
+            this.bytesTotal = bytesTotal;
+            this.bytesDownloaded = bytesDownloaded;
+        }
+    }
+
+    private class SyncFileRequest {
         private final String objectCode;
         private final String type;
         private final List<Domain> domains;
@@ -197,6 +294,8 @@ public class SyncTask extends AsyncTask<SyncConfig, SyncTask.SyncProgressReport,
             logger.info("start sync file {}", outputFile.getAbsolutePath());
             File tempFile = new File(outputFile.getAbsolutePath() + ".part");
 
+            publishProgress(new SyncProgressReport("progress", Collections.singletonList(new SyncFileProgressReport("start", type, 0, 0))));
+
             for(Domain domain : domains) {
                 OutputStream outputStream = null;
                 OutputStream cryptoStream = null;
@@ -209,7 +308,10 @@ public class SyncTask extends AsyncTask<SyncConfig, SyncTask.SyncProgressReport,
                     //cryptoStream = BubukaApplication.getInstance().getCrypto().getCipherOutputStream(outputStream, new Entity(fileObject.getPath()));
                     cryptoStream = outputStream;
 
-                    InputStream inputStream = url.openStream();
+                    URLConnection urlConnection = url.openConnection();
+                    urlConnection.connect();
+                    int contentLength = urlConnection.getContentLength();
+                    InputStream inputStream = urlConnection.getInputStream();
 
                     byte[] buffer = new byte[4096];
                     int len = inputStream.read(buffer, 0, buffer.length);
@@ -222,9 +324,10 @@ public class SyncTask extends AsyncTask<SyncConfig, SyncTask.SyncProgressReport,
 
                         cryptoStream.write(buffer, 0, len);
                         downloaded += len;
-                        if(downloaded % 100000 > lastChunkReported) {
+                        if(downloaded / 10000 > lastChunkReported) {
                             logger.info("downloaded {} bytes", MainHelper.humanReadableByteCountOld(downloaded, false));
-                            lastChunkReported = downloaded % 100000;
+                            lastChunkReported = downloaded / 100000;
+                            publishProgress(new SyncProgressReport("progress", Collections.singletonList(new SyncFileProgressReport("progress", type, contentLength, downloaded))));
                         }
                         len = inputStream.read(buffer, 0, buffer.length);
 
@@ -251,6 +354,8 @@ public class SyncTask extends AsyncTask<SyncConfig, SyncTask.SyncProgressReport,
                             outputStream.close();
                         } catch (Exception e) {}
                     }
+
+                    publishProgress(new SyncProgressReport("progress", Collections.singletonList(new SyncFileProgressReport("stop", type, 0, 0))));
                 }
             }
 

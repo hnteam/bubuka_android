@@ -47,6 +47,7 @@
                 android:background="@drawable/gray_border">
 
                 <LinearLayout
+                    android:id="@+id/clips_counter_block"
                     android:layout_weight="25"
                     android:orientation="vertical"
                     android:layout_width="fill_parent"
@@ -71,6 +72,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/music_counter_block"
                     android:layout_weight="25"
                     android:orientation="vertical"
                     android:layout_width="fill_parent"
@@ -94,6 +96,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/photo_counter_block"
                     android:layout_weight="25"
                     android:orientation="vertical"
                     android:layout_width="fill_parent"
@@ -117,6 +120,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/video_counter_block"
                     android:layout_weight="25"
                     android:orientation="vertical"
                     android:layout_width="fill_parent"

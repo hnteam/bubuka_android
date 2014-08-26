@@ -118,11 +118,15 @@ public class NavigationFragment extends Fragment {
     }
 
     public void show() {
-        drawerLayout.openDrawer(fragmentContainerView);
+        if(drawerLayout != null) {
+            drawerLayout.openDrawer(fragmentContainerView);
+        }
     }
 
     public void hide() {
-        drawerLayout.closeDrawer(fragmentContainerView);
+        if(drawerLayout != null) {
+            drawerLayout.closeDrawer(fragmentContainerView);
+        }
     }
 
     @Override
