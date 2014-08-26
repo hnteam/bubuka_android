@@ -23,6 +23,13 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".LoginActivity"
+            android:theme="@android:style/Theme.Holo.Light.NoActionBar"
+            android:label="Login">
+
+        </activity>
+
         <service
             android:name=".service.BubukaService"
             android:enabled="true"

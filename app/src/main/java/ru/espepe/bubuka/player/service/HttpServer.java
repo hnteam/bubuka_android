@@ -34,8 +34,15 @@ public class HttpServer implements Runnable {
     private volatile Thread thread;
     private ServerSocket serverSocket;
 
+    private final File filesDir;
+
+    public HttpServer(File filesDir) {
+        this.filesDir = filesDir;
+    }
+
+
     public static void main(String[] args) throws InterruptedException {
-        HttpServer server = new HttpServer();
+        HttpServer server = new HttpServer(new File("./files"));
         server.start();
         server.thread.join();
     }
@@ -78,7 +85,7 @@ public class HttpServer implements Runnable {
 
                 logger.info("client connected");
 
-                new ClientHandler(socket, new File("/storage/emulated/0/Android/data/ru.espepe.bubuka.player/files")).start();
+                new ClientHandler(socket, filesDir).start();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -155,7 +162,9 @@ public class HttpServer implements Runnable {
                     File file = new File(fileDir, path.substring(1));
                     OutputStream outputStream = socket.getOutputStream();
 
+                    logger.info("search file: {}", file);
                     if(!file.exists() || !file.isFile() || !file.canRead()) {
+                        logger.info("file not found, not a file, or not readable");
                         outputStream.write("HTTP/1.1 404 Not Found\r\nConnection: close\r\nContent-Type: text/plain\r\nContent-Length: 3\r\n\r\n404".getBytes("UTF-8"));
                         outputStream.flush();
                         socket.close();
@@ -204,7 +213,9 @@ public class HttpServer implements Runnable {
                 File file = new File(fileDir, path.substring(1));
                 OutputStream outputStream = socket.getOutputStream();
 
+                logger.info("try to search file: {}", file);
                 if(!file.exists() || !file.isFile() || !file.canRead()) {
+                    logger.info("file not found, not a file, or not readable");
                     outputStream.write("HTTP/1.1 404 Not Found\r\nConnection: close\r\nContent-Type: text/plain\r\nContent-Length: 3\r\n\r\n404".getBytes("UTF-8"));
                     outputStream.flush();
                     socket.close();
