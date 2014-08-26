@@ -1,5 +1,6 @@
 package ru.espepe.bubuka.player.fragment;
 
+import android.app.FragmentManager;
 import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.media.audiofx.Equalizer;
@@ -29,6 +30,7 @@ import ru.espepe.bubuka.player.log.LoggerFactory;
 
 public class PlayerFragment extends Fragment {
     private static final Logger logger = LoggerFactory.getLogger(PlayerFragment.class);
+    private FragmentStatePagerAdapter adapter;
 
     public static PlayerFragment newInstance() {
         PlayerFragment fragment = new PlayerFragment();
@@ -77,27 +79,47 @@ public class PlayerFragment extends Fragment {
 
         };
 
-        playerPager.setAdapter(new FragmentStatePagerAdapter(getFragmentManager()) {
-            @Override
-            public Fragment getItem(int position) {
-                return pages[position].fragment;
-            }
-
-            @Override
-            public CharSequence getPageTitle(int position) {
-                return pages[position].title;
-            }
-
-            @Override
-            public int getCount() {
-                return pages.length;
-            }
-        });
+        adapter = new PagesAdapter(getFragmentManager());
+        playerPager.setAdapter(adapter);
 
         pagerTitleStrip.setTabIndicatorColor(Color.parseColor("#e86f1c"));
 
 
         return view;
+    }
+
+
+    private class PagesAdapter extends FragmentStatePagerAdapter {
+        private final FragmentManager fm;
+
+        public PagesAdapter(FragmentManager fm) {
+            super(fm);
+            this.fm = fm;
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            return pages[position].fragment;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return pages[position].title;
+        }
+
+        @Override
+        public int getCount() {
+            return pages.length;
+        }
+
+        @Override @SuppressWarnings("NewApi")
+        public void destroyItem(ViewGroup container, int position, Object object) {
+            Fragment fragment = (Fragment) object;
+            try {
+                fragment.setUserVisibleHint(true);
+            } catch (Throwable e) {}
+            super.destroyItem(container, position, object);
+        }
     }
 
     /*
