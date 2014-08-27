@@ -1,51 +1,48 @@
 package ru.espepe.bubuka.player.pojo;
 
-import android.util.ArrayMap;
-
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
  * Created by wolong on 28/07/14.
  */
 public class SppConfig extends PojoObject {
-    private Map<String, TimeList> timeLists;
-    private Map<String, Block> blocks;
+    private Map<String, TimeListPojo> timeLists;
+    private Map<String, BlockPojo> blocks;
 
     public SppConfig() {
     }
 
     public SppConfig(Document doc) {
-        timeLists = new HashMap<String, TimeList>();
+        timeLists = new HashMap<String, TimeListPojo>();
         for(Element timeListElement : doc.select("timelist")) {
-            TimeList timeList = new TimeList(timeListElement);
+            TimeListPojo timeList = new TimeListPojo(timeListElement);
             timeLists.put(timeList.getName(), timeList);
         }
 
-        blocks = new HashMap<String, Block>();
+        blocks = new HashMap<String, BlockPojo>();
         for(Element blockElement : doc.select("block")) {
-            Block block = new Block(blockElement);
+            BlockPojo block = new BlockPojo(blockElement);
             blocks.put(block.getName(), block);
         }
     }
 
-    public Map<String, TimeList> getTimeLists() {
+    public Map<String, TimeListPojo> getTimeLists() {
         return timeLists;
     }
 
-    public void setTimeLists(Map<String, TimeList> timeLists) {
+    public void setTimeLists(Map<String, TimeListPojo> timeLists) {
         this.timeLists = timeLists;
     }
 
-    public Map<String, Block> getBlocks() {
+    public Map<String, BlockPojo> getBlocks() {
         return blocks;
     }
 
-    public void setBlocks(Map<String, Block> blocks) {
+    public void setBlocks(Map<String, BlockPojo> blocks) {
         this.blocks = blocks;
     }
 }

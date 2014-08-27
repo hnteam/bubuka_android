@@ -16,7 +16,7 @@ public class LoggerImpl implements Logger {
         TRACE, DEBUG, INFO, WARN, ERROR
     }
 
-    private static final String TAG = "LOGGER";
+    private static final String TAG = "BUBUKA";
 
     private void log(LogLevel level, String msg, Object[] args) {
 

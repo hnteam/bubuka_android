@@ -29,6 +29,7 @@ public class StorageFileDao extends AbstractDao<StorageFile, Long> {
         public final static Property Name = new Property(3, String.class, "name", false, "NAME");
         public final static Property Path = new Property(4, String.class, "path", false, "PATH");
         public final static Property Version = new Property(5, Integer.class, "version", false, "VERSION");
+        public final static Property Status = new Property(6, String.class, "status", false, "STATUS");
     };
 
 
@@ -49,7 +50,8 @@ public class StorageFileDao extends AbstractDao<StorageFile, Long> {
                 "'IDENTITY' INTEGER," + // 2: identity
                 "'NAME' TEXT," + // 3: name
                 "'PATH' TEXT," + // 4: path
-                "'VERSION' INTEGER);"); // 5: version
+                "'VERSION' INTEGER," + // 5: version
+                "'STATUS' TEXT);"); // 6: status
     }
 
     /** Drops the underlying database table. */
@@ -92,6 +94,11 @@ public class StorageFileDao extends AbstractDao<StorageFile, Long> {
         if (version != null) {
             stmt.bindLong(6, version);
         }
+ 
+        String status = entity.getStatus();
+        if (status != null) {
+            stmt.bindString(7, status);
+        }
     }
 
     /** @inheritdoc */
@@ -109,7 +116,8 @@ public class StorageFileDao extends AbstractDao<StorageFile, Long> {
             cursor.isNull(offset + 2) ? null : cursor.getInt(offset + 2), // identity
             cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3), // name
             cursor.isNull(offset + 4) ? null : cursor.getString(offset + 4), // path
-            cursor.isNull(offset + 5) ? null : cursor.getInt(offset + 5) // version
+            cursor.isNull(offset + 5) ? null : cursor.getInt(offset + 5), // version
+            cursor.isNull(offset + 6) ? null : cursor.getString(offset + 6) // status
         );
         return entity;
     }
@@ -123,6 +131,7 @@ public class StorageFileDao extends AbstractDao<StorageFile, Long> {
         entity.setName(cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3));
         entity.setPath(cursor.isNull(offset + 4) ? null : cursor.getString(offset + 4));
         entity.setVersion(cursor.isNull(offset + 5) ? null : cursor.getInt(offset + 5));
+        entity.setStatus(cursor.isNull(offset + 6) ? null : cursor.getString(offset + 6));
      }
     
     /** @inheritdoc */

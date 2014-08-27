@@ -16,6 +16,7 @@ import java.io.StringReader;
 import java.net.URL;
 import java.util.List;
 
+import ru.espepe.bubuka.player.BubukaApplication;
 import ru.espepe.bubuka.player.log.Logger;
 import ru.espepe.bubuka.player.log.LoggerFactory;
 import ru.espepe.bubuka.player.pojo.Domain;
@@ -37,6 +38,11 @@ public class BubukaApi {
     public BubukaApi(String domain, String objectCode) {
         this.domain = domain;
         this.objectCode = objectCode;
+    }
+
+    public BubukaApi() {
+        this.domain = BubukaApplication.getInstance().getBubukaDomain();
+        this.objectCode = BubukaApplication.getInstance().getObjectCode();
     }
 
     public SppConfig syncConfig(List<Domain> domains) throws IOException {

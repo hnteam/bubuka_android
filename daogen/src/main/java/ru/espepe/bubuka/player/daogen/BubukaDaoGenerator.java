@@ -11,7 +11,7 @@ import de.greenrobot.daogenerator.ToMany;
 
 public class BubukaDaoGenerator {
 
-    private static final int VERSION = 2;
+    private static final int VERSION = 3;
 
     public static void main(String[] args) throws Exception {
         //System.out.println("hello world :D ");
@@ -30,7 +30,7 @@ public class BubukaDaoGenerator {
         Entity timelist = schema.addEntity("Timelist");
         timelist.addIdProperty().autoincrement();
         timelist.addIntProperty("priority");
-        timelist.addStringProperty("name");
+        timelist.addStringProperty("name").unique();
 
         Entity play = schema.addEntity("Play");
         Property playId = play.addIdProperty().autoincrement().getProperty();
@@ -52,17 +52,31 @@ public class BubukaDaoGenerator {
         block.addBooleanProperty("loop");
 
 
-
+        Entity track = schema.addEntity("Track");
+        track.addIdProperty().autoincrement();
+        track.addDateProperty("startDate");
+        track.addDateProperty("endDate");
+        track.addStringProperty("file");
 
         // 1 timelist <-> * timelist
         Property playTimelistId = play.addLongProperty("timelist_id").getProperty();
         play.addToOne(timelist, playTimelistId);
         timelist.addToMany(play, playTimelistId);
 
-        // play -> block
+        // * play -> 1 block
         Property playBlockId = play.addLongProperty("block_id").getProperty();
         play.addToOne(block, playBlockId);
         block.addToMany(play, playBlockId);
+
+        // * track -> 1 block
+        Property trackBlockId = track.addLongProperty("block_id").getProperty();
+        track.addToOne(block, trackBlockId);
+        block.addToMany(track, trackBlockId);
+
+
+        // track -> storage file
+        Property trackFileId = track.addLongProperty("file_id").getProperty();
+        track.addToOne(storageFile, trackFileId);
 
         new DaoGenerator().generateAll(schema, args[0]);
     }

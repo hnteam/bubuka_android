@@ -5,21 +5,21 @@ import org.jsoup.nodes.Element;
 /**
  * Created by wolong on 28/07/14.
  */
-public class Track extends PojoObject {
+public class TrackPojo extends PojoObject {
     private String startDate;
     private String endDate;
     private String file;
 
-    public Track(String startDate, String endDate, String file) {
+    public TrackPojo(String startDate, String endDate, String file) {
         this.startDate = startDate;
         this.endDate = endDate;
         this.file = file;
     }
 
-    public Track() {
+    public TrackPojo() {
     }
 
-    public Track(Element element) {
+    public TrackPojo(Element element) {
         this.startDate = element.attr("startdate");
         this.endDate = element.attr("enddate");
         this.file = element.attr("file");

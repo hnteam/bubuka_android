@@ -8,25 +8,25 @@ import java.util.List;
 /**
  * Created by wolong on 28/07/14.
  */
-public class Block extends PojoObject {
+public class BlockPojo extends PojoObject {
     private String name;
     private String mediaDir;
     private Integer fading;
     private boolean loop;
-    private List<Track> tracks;
+    private List<TrackPojo> tracks;
 
-    public Block(Element element) {
+    public BlockPojo(Element element) {
         this.name = element.attr("name");
         this.mediaDir = element.attr("mediadir");
         this.fading = element.hasAttr("fading") ? Integer.parseInt(element.attr("fading")) : null;
         this.loop = element.hasAttr("loop") ? Boolean.parseBoolean(element.attr("loop")) : false;
-        this.tracks = new ArrayList<Track>();
+        this.tracks = new ArrayList<TrackPojo>();
         for(Element trackElement : element.select("track")) {
-            this.tracks.add(new Track(trackElement));
+            this.tracks.add(new TrackPojo(trackElement));
         }
     }
 
-    public Block() {
+    public BlockPojo() {
     }
 
     public String getName() {
@@ -59,5 +59,21 @@ public class Block extends PojoObject {
 
     public void setLoop(Boolean loop) {
         this.loop = loop;
+    }
+
+    public boolean isLoop() {
+        return loop;
+    }
+
+    public void setLoop(boolean loop) {
+        this.loop = loop;
+    }
+
+    public List<TrackPojo> getTracks() {
+        return tracks;
+    }
+
+    public void setTracks(List<TrackPojo> tracks) {
+        this.tracks = tracks;
     }
 }

@@ -12,6 +12,7 @@ public class StorageFile {
     private String name;
     private String path;
     private Integer version;
+    private String status;
 
     public StorageFile() {
     }
@@ -20,13 +21,14 @@ public class StorageFile {
         this.id = id;
     }
 
-    public StorageFile(Long id, String type, Integer identity, String name, String path, Integer version) {
+    public StorageFile(Long id, String type, Integer identity, String name, String path, Integer version, String status) {
         this.id = id;
         this.type = type;
         this.identity = identity;
         this.name = name;
         this.path = path;
         this.version = version;
+        this.status = status;
     }
 
     public Long getId() {
@@ -75,6 +77,14 @@ public class StorageFile {
 
     public void setVersion(Integer version) {
         this.version = version;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
 }

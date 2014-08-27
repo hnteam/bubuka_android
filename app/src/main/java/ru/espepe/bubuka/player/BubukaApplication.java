@@ -3,7 +3,6 @@ package ru.espepe.bubuka.player;
 import android.app.Application;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.widget.Toast;
 
 import com.facebook.crypto.Crypto;
 import com.facebook.crypto.keychain.SharedPrefsBackedKeyChain;
@@ -12,13 +11,15 @@ import com.google.gson.Gson;
 
 import java.io.File;
 
-import de.greenrobot.dao.identityscope.IdentityScopeType;
 import ru.espepe.bubuka.player.dao.DaoMaster;
 import ru.espepe.bubuka.player.dao.DaoSession;
-import ru.espepe.bubuka.player.dao.StorageFileDao;
 import ru.espepe.bubuka.player.pojo.SyncStatus;
+import ru.espepe.bubuka.player.service.BubukaPreferences;
 import ru.espepe.bubuka.player.service.HttpServer;
-import ru.espepe.bubuka.player.service.SyncTask;
+import ru.espepe.bubuka.player.service.sync.OnSyncFileProgressListener;
+import ru.espepe.bubuka.player.service.sync.OnSyncProgressListener;
+import ru.espepe.bubuka.player.service.sync.Sync;
+import ru.espepe.bubuka.player.service.sync.SyncTask;
 
 /**
  * Created by wolong on 30/07/14.
@@ -39,7 +40,9 @@ public class BubukaApplication extends Application {
 
     private File filesDir;
 
-    private SyncTask syncTask;
+    private Sync syncTask;
+
+    private BubukaPreferences preferences;
 
     @Override
     public void onCreate() {
@@ -54,7 +57,7 @@ public class BubukaApplication extends Application {
 
         filesDir = getExternalFilesDir(null);
 
-        syncTask = new SyncTask();
+        syncTask = new Sync();
 
         httpServer = new HttpServer(filesDir);
         httpServer.start();
@@ -63,6 +66,7 @@ public class BubukaApplication extends Application {
         daoMaster = new DaoMaster(dbHelper.getWritableDatabase());
         daoSession = daoMaster.newSession();
 
+        preferences = new BubukaPreferences(this);
     }
 
     public Crypto getCrypto() {
@@ -104,7 +108,7 @@ public class BubukaApplication extends Application {
         syncTask.setListener(null);
     }
 
-    public void setSyncListener(SyncTask.OnProgressListener listener) {
+    public void setSyncListener(OnSyncProgressListener listener) {
         syncTask.setListener(listener);
     }
 
@@ -133,9 +137,18 @@ public class BubukaApplication extends Application {
         if(syncStatusString == null) {
             syncStatus = new SyncStatus(SyncStatus.SyncStatusType.NOT_RUNNING);
         } else {
-            syncStatus = gson.fromJson(syncStatusString, SyncStatus.class);
+            try {
+                syncStatus = gson.fromJson(syncStatusString, SyncStatus.class);
+            } catch (Exception e) {
+                syncStatus = new SyncStatus(SyncStatus.SyncStatusType.NOT_RUNNING);
+            }
         }
 
         setSyncStatus(syncStatus);
+    }
+
+
+    public BubukaPreferences getPreferences() {
+        return preferences;
     }
 }
