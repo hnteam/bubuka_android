@@ -1,6 +1,7 @@
 package ru.espepe.bubuka.player.fragment;
 
 import android.app.Fragment;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +19,7 @@ import de.greenrobot.dao.query.WhereCondition;
 import ru.espepe.bubuka.player.BubukaApplication;
 import ru.espepe.bubuka.player.MainActivity;
 import ru.espepe.bubuka.player.R;
+import ru.espepe.bubuka.player.activity.CurrentPlaylistActivity;
 import ru.espepe.bubuka.player.dao.StorageFile;
 import ru.espepe.bubuka.player.dao.StorageFileDao;
 import ru.espepe.bubuka.player.helper.ProgressBackgroundDrawable;
@@ -39,6 +41,16 @@ public class MainFragment extends Fragment {
         return fragment;
     }
 
+    private void startActivityPlaylist(String type) {
+        Intent intent = new Intent(getActivity(), CurrentPlaylistActivity.class);
+        intent.putExtra("type", type);
+        startActivity(intent);
+    }
+
+    @OnClick(R.id.clips_counter_block) void showClips() { startActivityPlaylist("clip"); }
+    @OnClick(R.id.photo_counter_block) void showPhoto() { startActivityPlaylist("photo"); }
+    @OnClick(R.id.video_counter_block) void showVideo() { startActivityPlaylist("video"); }
+    @OnClick(R.id.music_counter_block) void showMusic() { startActivityPlaylist("music"); }
 
     @InjectView(R.id.clips_counter) TextView clipCounter;
     @InjectView(R.id.photo_counter) TextView photoCounter;

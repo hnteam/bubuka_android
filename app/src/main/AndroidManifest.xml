@@ -36,6 +36,11 @@
             android:exported="true"
             android:process="ru.espepe.bubuka.player.service">
         </service>
+
+        <activity android:name=".activity.CurrentPlaylistActivity"
+            android:label="Playlist" android:theme="@android:style/Theme.Holo.Light.NoActionBar">
+
+        </activity>
     </application>
 
 </manifest>

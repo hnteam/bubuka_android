@@ -15,10 +15,13 @@ import org.acra.annotation.ReportsCrashes;
 import org.acra.sender.HttpSender;
 
 import java.io.File;
+import java.util.List;
 
 import ru.espepe.bubuka.player.dao.DaoMaster;
 import ru.espepe.bubuka.player.dao.DaoSession;
+import ru.espepe.bubuka.player.pojo.PlayList;
 import ru.espepe.bubuka.player.pojo.SyncStatus;
+import ru.espepe.bubuka.player.service.BubukaApi;
 import ru.espepe.bubuka.player.service.BubukaPreferences;
 import ru.espepe.bubuka.player.service.HttpServer;
 import ru.espepe.bubuka.player.service.sync.OnSyncFileProgressListener;
@@ -83,6 +86,8 @@ public class BubukaApplication extends Application {
         daoSession = daoMaster.newSession();
 
         preferences = new BubukaPreferences(this);
+
+        //retrievePlaylists();
     }
 
     public Crypto getCrypto() {
@@ -166,5 +171,88 @@ public class BubukaApplication extends Application {
 
     public BubukaPreferences getPreferences() {
         return preferences;
+    }
+
+    private List<PlayList> readyPlaylists;
+    private List<PlayList> musicPlaylists;
+    private List<PlayList> videoPlaylists;
+    private List<PlayList> slidePlaylists;
+    private PlayList currentPlayList;
+
+    private void retrievePlaylists() {
+        retrievePreparedPlaylists();
+        retrievePlaylistsType("music");
+        retrievePlaylistsType("video");
+        retrievePlaylistsType("slide");
+    }
+
+    public void retrievePreparedPlaylists() {
+        BubukaApi api = new BubukaApi(getBubukaDomain(), getObjectCode());
+        api.getPreparedPlaylists(this, new BubukaApi.RetrievePlaylistsListener() {
+            @Override
+            public void onPlaylistsSuccess(List<PlayList> playLists) {
+                synchronized (BubukaApplication.this) {
+                    readyPlaylists = playLists;
+                    checkAndNotifyPlaylistsWatchers();
+                }
+            }
+
+            @Override
+            public void onPlaylistsFailed() {
+                retrievePreparedPlaylists();
+            }
+        });
+    }
+
+    public void retrievePlaylistsType(final String type) {
+        BubukaApi api = new BubukaApi(getBubukaDomain(), getObjectCode());
+        api.getPlaylist(this, type, new BubukaApi.RetrievePlaylistsListener() {
+            @Override
+            public void onPlaylistsSuccess(List<PlayList> playLists) {
+                synchronized (BubukaApplication.this) {
+                    if (type.equals("music")) {
+                        musicPlaylists = playLists;
+                    } else if(type.equals("video")) {
+                        videoPlaylists = playLists;
+                    } else if(type.equals("slide")) {
+                        slidePlaylists = playLists;
+                    }
+
+                    checkAndNotifyPlaylistsWatchers();
+                }
+            }
+
+            @Override
+            public void onPlaylistsFailed() {
+                retrievePlaylistsType(type);
+            }
+        });
+    }
+
+    private void checkAndNotifyPlaylistsWatchers() {
+        List<PlayList>[] playlistsLists = new List[] {readyPlaylists, musicPlaylists, videoPlaylists, slidePlaylists};
+        if(allNotNull(playlistsLists)) {
+            for(List<PlayList> playLists : playlistsLists) {
+                for(PlayList playList : playLists) {
+                    if(playList.isActive()) {
+                        currentPlayList = playList;
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean allNotNull(List[] list) {
+        for(Object o : list) {
+            if(o == null) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public PlayList getCurrentPlayList() {
+        return currentPlayList;
     }
 }
