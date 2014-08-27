@@ -37,5 +37,7 @@ dependencies {
     compile 'com.astuetz:pagerslidingtabstrip:1.0.1'
     compile 'com.loopj.android:android-async-http:1.4.5'
 
+    compile 'ch.acra:acra:4.5.0'
+
     compile fileTree(dir: 'libs', include: ['*.jar'])
 }

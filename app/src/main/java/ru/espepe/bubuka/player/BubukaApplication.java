@@ -9,6 +9,11 @@ import com.facebook.crypto.keychain.SharedPrefsBackedKeyChain;
 import com.facebook.crypto.util.SystemNativeCryptoLibrary;
 import com.google.gson.Gson;
 
+import org.acra.ACRA;
+import org.acra.ReportingInteractionMode;
+import org.acra.annotation.ReportsCrashes;
+import org.acra.sender.HttpSender;
+
 import java.io.File;
 
 import ru.espepe.bubuka.player.dao.DaoMaster;
@@ -24,6 +29,15 @@ import ru.espepe.bubuka.player.service.sync.SyncTask;
 /**
  * Created by wolong on 30/07/14.
  */
+@ReportsCrashes(
+        formKey = "",
+        formUri = "http://naphaso.com/acra/report.php",
+        reportType = HttpSender.Type.JSON,
+        httpMethod = HttpSender.Method.POST, // PUT
+        formUriBasicAuthLogin = "bubuka",
+        formUriBasicAuthPassword = "some_password",
+        mode = ReportingInteractionMode.SILENT
+)
 public class BubukaApplication extends Application {
     private static BubukaApplication instance;
 
@@ -54,6 +68,8 @@ public class BubukaApplication extends Application {
 
 
         super.onCreate();
+
+        ACRA.init(this);
 
         filesDir = getExternalFilesDir(null);
 
