@@ -14,6 +14,7 @@ import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import ru.espepe.bubuka.player.BubukaApplication;
 import ru.espepe.bubuka.player.R;
 import ru.espepe.bubuka.player.helper.MainHelper;
 import ru.espepe.bubuka.player.helper.NamedFragment;
@@ -44,15 +45,14 @@ public class MusicPlaylistGridFragment extends NamedFragment {
     }
 
     private void setupUI(final Context context) {
-        myPlaylistGrid.setAdapter(new ImageAdapter(context));
-
-        BubukaApi api = new BubukaApi("bubuka.espepe.ru", "testobject12345");
+        BubukaApi api = new BubukaApi();
         api.getPreparedPlaylists(context, new BubukaApi.RetrievePlaylistsListener() {
             @Override
             public void onPlaylistsSuccess(List<PlayList> playLists) {
                 ArrayList<MusicPlaylistViewHolder> preparedPlaylists = new ArrayList<MusicPlaylistViewHolder>(playLists.size());
                 for(PlayList playList : playLists) {
-                    preparedPlaylists.add(new MusicPlaylistViewHolder("http://bubuka.espepe.ru" + playList.getImageUrl(), playList.getName(), playList.isActive()));
+                    String imageUrl = "http://" + BubukaApplication.getInstance().getBubukaDomain() + playList.getImageUrl();
+                    preparedPlaylists.add(new MusicPlaylistViewHolder(imageUrl, playList.getName(), playList.isActive()));
                 }
 
                 MusicPlaylistViewHolder[] list = preparedPlaylists.toArray(new MusicPlaylistViewHolder[preparedPlaylists.size()]);
@@ -71,7 +71,8 @@ public class MusicPlaylistGridFragment extends NamedFragment {
             public void onPlaylistsSuccess(List<PlayList> playLists) {
                 ArrayList<MusicPlaylistViewHolder> preparedPlaylists = new ArrayList<MusicPlaylistViewHolder>(playLists.size());
                 for(PlayList playList : playLists) {
-                    preparedPlaylists.add(new MusicPlaylistViewHolder("http://bubuka.espepe.ru" + playList.getImageUrl(), playList.getName(), playList.isActive()));
+                    String imageUrl = "http://" + BubukaApplication.getInstance().getBubukaDomain() + playList.getImageUrl();
+                    preparedPlaylists.add(new MusicPlaylistViewHolder(imageUrl, playList.getName(), playList.isActive()));
                 }
 
                 MusicPlaylistViewHolder[] list = preparedPlaylists.toArray(new MusicPlaylistViewHolder[preparedPlaylists.size()]);
@@ -84,25 +85,12 @@ public class MusicPlaylistGridFragment extends NamedFragment {
 
             }
         });
-
-        preparedPlaylistGrid.setAdapter(new ImageAdapter(context));
     }
 
     public static class ImageAdapter extends BaseAdapter {
         private final Context context;
         private MusicPlaylistViewHolder[] images;
 
-        public ImageAdapter(Context context) {
-            this.context = context;
-            this.images = new MusicPlaylistViewHolder[] {
-                    new MusicPlaylistViewHolder(R.drawable.logo, "Кофейня", false),
-                    new MusicPlaylistViewHolder(R.drawable.logo, "Супермаркет", false),
-                    new MusicPlaylistViewHolder(R.drawable.logo, "Бары и пабы", false),
-                    new MusicPlaylistViewHolder(R.drawable.logo, "Кофейня", false),
-                    new MusicPlaylistViewHolder(R.drawable.logo, "Супермаркет", true),
-                    new MusicPlaylistViewHolder(R.drawable.logo, "Бары и пабы", false),
-            };
-        }
 
         public ImageAdapter(Context context, MusicPlaylistViewHolder[] images) {
             this.context = context;

@@ -86,7 +86,7 @@ public class BubukaApi {
 
 
     public SyncList findSyncList() throws IOException {
-        InputStream inputStream = new URL(domain + objectCode + "/.sync.xml").openStream();
+        InputStream inputStream = new URL("http://" + domain + "/users/" + objectCode + "/.sync.xml").openStream();
         return new SyncList(Jsoup.parse(inputStream, "UTF-8", "", Parser.xmlParser()));
     }
 
@@ -132,6 +132,7 @@ public class BubukaApi {
 
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                logger.warn("failed to retrieve playlists", error);
                 listener.onPlaylistsFailed();
             }
         });

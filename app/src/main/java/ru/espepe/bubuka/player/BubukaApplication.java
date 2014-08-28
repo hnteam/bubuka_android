@@ -15,7 +15,9 @@ import org.acra.annotation.ReportsCrashes;
 import org.acra.sender.HttpSender;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import ru.espepe.bubuka.player.dao.DaoMaster;
 import ru.espepe.bubuka.player.dao.DaoSession;
@@ -87,7 +89,7 @@ public class BubukaApplication extends Application {
 
         preferences = new BubukaPreferences(this);
 
-        //retrievePlaylists();
+        retrievePlaylists();
     }
 
     public Crypto getCrypto() {
@@ -114,7 +116,7 @@ public class BubukaApplication extends Application {
 
     public String getBubukaDomain() {
         // TODO: move to properties
-        return "http://bubuka.espepe.ru/users/";
+        return "bubuka.espepe.ru";
     }
 
     public void toggleSync() {
@@ -177,7 +179,7 @@ public class BubukaApplication extends Application {
     private List<PlayList> musicPlaylists;
     private List<PlayList> videoPlaylists;
     private List<PlayList> slidePlaylists;
-    private PlayList currentPlayList;
+    private Map<String, PlayList> currentPlayLists = new HashMap<String, PlayList>();
 
     private void retrievePlaylists() {
         retrievePreparedPlaylists();
@@ -199,7 +201,8 @@ public class BubukaApplication extends Application {
 
             @Override
             public void onPlaylistsFailed() {
-                retrievePreparedPlaylists();
+
+                //retrievePreparedPlaylists();
             }
         });
     }
@@ -224,19 +227,40 @@ public class BubukaApplication extends Application {
 
             @Override
             public void onPlaylistsFailed() {
-                retrievePlaylistsType(type);
+
+                //retrievePlaylistsType(type);
             }
         });
     }
 
+    @SuppressWarnings("unchecked")
     private void checkAndNotifyPlaylistsWatchers() {
         List<PlayList>[] playlistsLists = new List[] {readyPlaylists, musicPlaylists, videoPlaylists, slidePlaylists};
         if(allNotNull(playlistsLists)) {
-            for(List<PlayList> playLists : playlistsLists) {
-                for(PlayList playList : playLists) {
-                    if(playList.isActive()) {
-                        currentPlayList = playList;
-                    }
+            for(PlayList playList : readyPlaylists) {
+                if(playList.isActive()) {
+                    currentPlayLists.put("music", playList);
+                    currentPlayLists.put("video", playList);
+                    currentPlayLists.put("photo", playList);
+                    return;
+                }
+            }
+
+            for(PlayList playList : musicPlaylists) {
+                if(playList.isActive()) {
+                    currentPlayLists.put("music", playList);
+                }
+            }
+
+            for(PlayList playList : videoPlaylists) {
+                if(playList.isActive()) {
+                    currentPlayLists.put("video", playList);
+                }
+            }
+
+            for(PlayList playList : slidePlaylists) {
+                if(playList.isActive()) {
+                    currentPlayLists.put("photo", playList);
                 }
             }
         }
@@ -252,7 +276,7 @@ public class BubukaApplication extends Application {
         return true;
     }
 
-    public PlayList getCurrentPlayList() {
-        return currentPlayList;
+    public PlayList getCurrentPlayList(String type) {
+        return currentPlayLists.get(type);
     }
 }

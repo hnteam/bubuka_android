@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<com.loopj.android.image.SmartImageView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@drawable/gray_border"
+    android:layout_width="@dimen/image_grid_item_size"
+    android:layout_height="@dimen/image_grid_item_size"
+    android:id="@+id/image_grid_item_image"
+    android:scaleType="centerCrop" />
