@@ -115,8 +115,13 @@ public class BubukaApplication extends Application {
     }
 
     public String getBubukaDomain() {
-        // TODO: move to properties
-        return "bubuka.espepe.ru";
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        return prefs.getString("bubuka_domain", "bubuka.espepe.ru");
+    }
+
+    public void setBubukaDomain(String value) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        prefs.edit().putString("bubuka_domain", value).commit();
     }
 
     public void toggleSync() {

@@ -15,6 +15,7 @@ import ru.espepe.bubuka.player.fragment.NavigationFragment;
 import ru.espepe.bubuka.player.fragment.screen.AboutScreenFragment;
 import ru.espepe.bubuka.player.fragment.screen.MainScreenFragment;
 import ru.espepe.bubuka.player.fragment.screen.PlaylistsScreenFragment;
+import ru.espepe.bubuka.player.fragment.screen.SettingsScreenFragment;
 import ru.espepe.bubuka.player.fragment.screen.TimeTableScreenFragment;
 import ru.espepe.bubuka.player.log.Logger;
 import ru.espepe.bubuka.player.log.LoggerFactory;
@@ -33,6 +34,7 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
     private PlaylistsScreenFragment playlistsScreenFragment;
     private TimeTableScreenFragment timeTableScreenFragment;
     private AboutScreenFragment aboutScreenFragment;
+    private SettingsScreenFragment settingsScreenFragment;
 
 
     @Override
@@ -61,6 +63,7 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
         playlistsScreenFragment = new PlaylistsScreenFragment();
         timeTableScreenFragment = new TimeTableScreenFragment();
         aboutScreenFragment = new AboutScreenFragment();
+        settingsScreenFragment = new SettingsScreenFragment();
 
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
         transaction
@@ -74,7 +77,10 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
                 .hide(timeTableScreenFragment)
 
                 .add(R.id.screen_fragment_container, aboutScreenFragment, aboutScreenFragment.getClass().getSimpleName())
-                .hide(aboutScreenFragment);
+                .hide(aboutScreenFragment)
+
+                .add(R.id.screen_fragment_container, settingsScreenFragment, settingsScreenFragment.getClass().getSimpleName())
+                .hide(settingsScreenFragment);
 
 
         transaction.commit();
@@ -143,6 +149,7 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
                 targetFragment = timeTableScreenFragment;
                 break;
             case SETTINS:
+                targetFragment = settingsScreenFragment;
                 break;
             case ABOUT:
                 targetFragment = aboutScreenFragment;
