@@ -12,6 +12,7 @@ import android.support.v4.widget.DrawerLayout;
 import ru.espepe.bubuka.player.adapter.NavigationAdapter;
 import ru.espepe.bubuka.player.fragment.MainFragment;
 import ru.espepe.bubuka.player.fragment.NavigationFragment;
+import ru.espepe.bubuka.player.fragment.screen.AboutScreenFragment;
 import ru.espepe.bubuka.player.fragment.screen.MainScreenFragment;
 import ru.espepe.bubuka.player.fragment.screen.PlaylistsScreenFragment;
 import ru.espepe.bubuka.player.fragment.screen.TimeTableScreenFragment;
@@ -31,7 +32,7 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
     private MainScreenFragment mainScreenFragment;
     private PlaylistsScreenFragment playlistsScreenFragment;
     private TimeTableScreenFragment timeTableScreenFragment;
-
+    private AboutScreenFragment aboutScreenFragment;
 
 
     @Override
@@ -59,6 +60,7 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
         mainScreenFragment = new MainScreenFragment();
         playlistsScreenFragment = new PlaylistsScreenFragment();
         timeTableScreenFragment = new TimeTableScreenFragment();
+        aboutScreenFragment = new AboutScreenFragment();
 
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
         transaction
@@ -69,7 +71,10 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
                 .hide(playlistsScreenFragment)
 
                 .add(R.id.screen_fragment_container, timeTableScreenFragment, timeTableScreenFragment.getClass().getSimpleName())
-                .hide(timeTableScreenFragment);
+                .hide(timeTableScreenFragment)
+
+                .add(R.id.screen_fragment_container, aboutScreenFragment, aboutScreenFragment.getClass().getSimpleName())
+                .hide(aboutScreenFragment);
 
 
         transaction.commit();
@@ -104,7 +109,7 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
        fragmentManager.beginTransaction()
                 .show(fragment)
                 .addToBackStack(fragment.getClass().getSimpleName())
-               .commit();
+                .commit();
     }
 
 
@@ -140,6 +145,7 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
             case SETTINS:
                 break;
             case ABOUT:
+                targetFragment = aboutScreenFragment;
                 break;
             case OBJECT_SELECTION:
                 break;

@@ -22,6 +22,12 @@
     <string name="menu_about_app">О программе</string>
     <string name="menu_object_selection">Выбор объекта</string>
     <string name="goto_register_demo_object"><u>Зарегистрировать демо-объект</u></string>
+    <string name="about_text">
+        Лицензионная музыка от европейских правообладателей идеально подходит для кафе, ресторана,
+        модного бутика или торгового центра. Вы получаете лицензионное соглашение и освобождаетесь
+        от дополнительных отчислений в РАО и ВОИС.\n\n
+        <a href="http://bubuka.info/">http://bubuka.info</a>
+    </string>
 
 
 </resources>

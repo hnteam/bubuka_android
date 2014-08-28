@@ -66,7 +66,7 @@ public class TimeTableAdapter extends BaseExpandableListAdapter {
         Timelist videoBackground = timelistDao.queryBuilder().where(TimelistDao.Properties.Name.eq("videobackground")).unique();
         if(videoBackground != null) {
             for(Play play : videoBackground.getPlayList()) {
-                logger.info("video play time: {}, name: {}", play.getTime(), play.getBlock().getName());
+                //logger.info("video play time: {}, name: {}", play.getTime(), play.getBlock().getName());
 
                 if(timeInInterval(play.getTime(), 6*60, 12*60)) {
                     video6 = play.getBlock().getName();
@@ -81,7 +81,7 @@ public class TimeTableAdapter extends BaseExpandableListAdapter {
         Timelist musicBackground = timelistDao.queryBuilder().where(TimelistDao.Properties.Name.eq("background")).unique();
         if(musicBackground != null) {
             for(Play play : musicBackground.getPlayList()) {
-                logger.info("music play time: {}, name: {}", play.getTime(), play.getBlock().getName());
+                //logger.info("music play time: {}, name: {}", play.getTime(), play.getBlock().getName());
 
                 if(timeInInterval(play.getTime(), 6*60, 12*60)) {
                     music6 = play.getBlock().getName();
