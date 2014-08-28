@@ -9,12 +9,25 @@ import android.widget.TextView;
 
 import org.w3c.dom.Text;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import ru.espepe.bubuka.player.BubukaApplication;
 import ru.espepe.bubuka.player.R;
+import ru.espepe.bubuka.player.dao.Block;
+import ru.espepe.bubuka.player.dao.BlockDao;
+import ru.espepe.bubuka.player.dao.Play;
+import ru.espepe.bubuka.player.dao.Timelist;
+import ru.espepe.bubuka.player.dao.TimelistDao;
+import ru.espepe.bubuka.player.log.Logger;
+import ru.espepe.bubuka.player.log.LoggerFactory;
 
 /**
  * Created by wolong on 14/08/14.
  */
 public class TimeTableAdapter extends BaseExpandableListAdapter {
+    private static final Logger logger = LoggerFactory.getLogger(TimeTableAdapter.class);
+
     private final Context context;
 
     private TimeTableItem[] items;
@@ -22,9 +35,83 @@ public class TimeTableAdapter extends BaseExpandableListAdapter {
     public TimeTableAdapter(Context context) {
         this.context = context;
 
+        TimelistDao timelistDao = BubukaApplication.getInstance().getDaoSession().getTimelistDao();
+        BlockDao blockDao = BubukaApplication.getInstance().getDaoSession().getBlockDao();
+
+
+
+
+
+        List<Block> musicBlocks = blockDao.queryBuilder().where(BlockDao.Properties.Mediadir.eq("./music/")).list();
+        List<Block> videoBlocks = blockDao.queryBuilder().where(BlockDao.Properties.Mediadir.eq("./video/")).list();
+
+        TimeTableItem[] videoItems = new TimeTableItem[videoBlocks.size()];
+        TimeTableItem[] musicItems = new TimeTableItem[musicBlocks.size()];
+
+        for(int i = 0; i < videoBlocks.size(); i++) {
+            videoItems[i] = new TimeTableChildItem(videoBlocks.get(i).getName());
+        }
+
+        for(int i = 0; i < musicBlocks.size(); i++) {
+            musicItems[i] = new TimeTableChildItem(musicBlocks.get(i).getName());
+        }
+
+        String music6 = "Музыкальный плейлист не выбран";
+        String video6 = "Видео плейлист не выбран";
+        String music12 = "Музыкальный плейлист не выбран";
+        String video12 = "Видео плейлист не выбран";
+        String music18 = "Музыкальный плейлист не выбран";
+        String video18 = "Видео плейлист не выбран";
+
+        Timelist videoBackground = timelistDao.queryBuilder().where(TimelistDao.Properties.Name.eq("videobackground")).unique();
+        if(videoBackground != null) {
+            for(Play play : videoBackground.getPlayList()) {
+                logger.info("video play time: {}, name: {}", play.getTime(), play.getBlock().getName());
+
+                if(timeInInterval(play.getTime(), 6*60, 12*60)) {
+                    video6 = play.getBlock().getName();
+                } else if(timeInInterval(play.getTime(), 12*60, 18*60)) {
+                    video12 = play.getBlock().getName();
+                } else if(timeInInterval(play.getTime(), 18*60, 24*60)) {
+                    video18 = play.getBlock().getName();
+                }
+            }
+        }
+
+        Timelist musicBackground = timelistDao.queryBuilder().where(TimelistDao.Properties.Name.eq("background")).unique();
+        if(musicBackground != null) {
+            for(Play play : musicBackground.getPlayList()) {
+                logger.info("music play time: {}, name: {}", play.getTime(), play.getBlock().getName());
+
+                if(timeInInterval(play.getTime(), 6*60, 12*60)) {
+                    music6 = play.getBlock().getName();
+                } else if(timeInInterval(play.getTime(), 12*60, 18*60)) {
+                    music12 = play.getBlock().getName();
+                } else if(timeInInterval(play.getTime(), 18*60, 24*60)) {
+                    music18 = play.getBlock().getName();
+                }
+            }
+        }
+
+        items = new TimeTableItem[] {
+                new TimeTableSectionItem("Утро (с 6 до 12)"),
+                new TimeTableGroupItem(R.drawable.setting_play, music6, musicItems),
+                new TimeTableGroupItem(R.drawable.setting_video, video6, videoItems),
+
+                new TimeTableSectionItem("День (с 12 до 18)"),
+                new TimeTableGroupItem(R.drawable.setting_play, music12, musicItems),
+                new TimeTableGroupItem(R.drawable.setting_video, video12, videoItems),
+
+                new TimeTableSectionItem("Вечер (с 18 до 24)"),
+                new TimeTableGroupItem(R.drawable.setting_play, music18, musicItems),
+                new TimeTableGroupItem(R.drawable.setting_video, video18, videoItems),
+        };
+
+        /*
+
         items = new TimeTableItem[] {
 
-                new TimeTableSectionItem("Утро (с 8 до 12)"),
+                new TimeTableSectionItem("Утро (с 6 до 12)"),
                 new TimeTableGroupItem(R.drawable.setting_play, "Музыкальный плейлист не выбран", new TimeTableItem[]{
                         new TimeTableChildItem("Music item 1"),
                         new TimeTableChildItem("Music item 2"),
@@ -62,6 +149,7 @@ public class TimeTableAdapter extends BaseExpandableListAdapter {
                         new TimeTableChildItem("Video item 3")
                 }),
         };
+        */
     }
 
     @Override
@@ -134,7 +222,9 @@ public class TimeTableAdapter extends BaseExpandableListAdapter {
         return 1;
     }
 
-
+    private static boolean timeInInterval(Integer time, int from, int to) {
+        return time != null && time >= from && time < to;
+    }
 
     private interface TimeTableItem {
         View getView(View convertView);
@@ -201,6 +291,7 @@ public class TimeTableAdapter extends BaseExpandableListAdapter {
             TextView textView = (TextView) convertView.findViewById(R.id.timetable_section_name);
             textView.setText(text);
 
+            convertView.setEnabled(false);
             return convertView;
         }
 
