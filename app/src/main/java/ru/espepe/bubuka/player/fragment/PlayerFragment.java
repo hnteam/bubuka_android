@@ -122,6 +122,14 @@ public class PlayerFragment extends Fragment {
         }
     }
 
+    public String getCurrentMusicTrackInfo() {
+        return musicPlayerFragment.getCurrentTrackInfo();
+    }
+
+    public String getCurrentVideoTrackInfo() {
+        return videoPlayerFragment.getCurrentTrackInfo();
+    }
+
     /*
     @InjectView(R.id.play_prev_button)
     protected ImageView prevButton;

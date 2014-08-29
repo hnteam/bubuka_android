@@ -5,13 +5,21 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
+import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 
+import butterknife.ButterKnife;
+import butterknife.InjectView;
+import butterknife.OnClick;
 import ru.espepe.bubuka.player.adapter.NavigationAdapter;
 import ru.espepe.bubuka.player.fragment.MainFragment;
 import ru.espepe.bubuka.player.fragment.NavigationFragment;
+import ru.espepe.bubuka.player.fragment.PlayerFragment;
 import ru.espepe.bubuka.player.fragment.screen.AboutScreenFragment;
 import ru.espepe.bubuka.player.fragment.screen.MainScreenFragment;
 import ru.espepe.bubuka.player.fragment.screen.PlaylistsScreenFragment;
@@ -49,7 +57,7 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
 
         setContentView(R.layout.activity_main);
         //getActionBar().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#e86f1c")));
-
+        ButterKnife.inject(this);
 
         DrawerLayout drawerLayout = (DrawerLayout) findViewById(R.id.main_drawer_layout);
 
@@ -132,27 +140,35 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
         switch (id) {
             case CURRENT_PLAY:
                 targetFragment = mainScreenFragment;
+                onActivatePlayer();
                 break;
             case MY_FAST_TRACKS:
                 targetFragment = mainScreenFragment;
+                onActivatePlayer();
                 break;
             case MUSIC:
                 targetFragment = playlistsScreenFragment;
+                onActivatePlaylists();
                 break;
             case VIDEO:
                 targetFragment = playlistsScreenFragment;
+                onActivatePlaylists();
                 break;
             case PHOTO:
                 targetFragment = playlistsScreenFragment;
+                onActivatePlaylists();
                 break;
             case PLAYLISTS_BY_TIME:
                 targetFragment = timeTableScreenFragment;
+                onActivatePlaylists();
                 break;
             case SETTINS:
                 targetFragment = settingsScreenFragment;
+                onActivatePlaylists();
                 break;
             case ABOUT:
                 targetFragment = aboutScreenFragment;
+                onActivatePlaylists();
                 break;
             case OBJECT_SELECTION:
                 break;
@@ -180,5 +196,65 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
                 mainFragment.receiveSyncProgress(progressReport);
             }
         }
+    }
+
+    @InjectView(R.id.bottom_player_layout)
+    protected LinearLayout bottomPlayerLayout;
+
+    @InjectView(R.id.bottom_player_text)
+    protected TextView bottomPlayerText;
+
+    @InjectView(R.id.bottom_playlists_text)
+    protected TextView bottomPlaylistsText;
+
+    @InjectView(R.id.bottom_player_current_track)
+    protected TextView bottomPlayerCurrentTrack;
+
+    @OnClick(R.id.botton_switcher_player)
+    public void activatePlayer() {
+        gotoFragment(mainScreenFragment);
+        onActivatePlayer();
+        updatePlayer();
+    }
+
+    @OnClick(R.id.botton_switcher_playlists)
+    public void activatePlaylists() {
+        gotoFragment(playlistsScreenFragment);
+        onActivatePlaylists();
+    }
+
+    public void updatePlayer() {
+        PlayerFragment playerFragment = mainScreenFragment.getPlayerFragment();
+        if(playerFragment != null) {
+            String musicTrackInfo = playerFragment.getCurrentMusicTrackInfo();
+            if(musicTrackInfo != null) {
+                bottomPlayerCurrentTrack.setText(musicTrackInfo);
+                return;
+            }
+
+            String videoTrackInfo = playerFragment.getCurrentVideoTrackInfo();
+            if(videoTrackInfo != null) {
+                bottomPlayerCurrentTrack.setText(videoTrackInfo);
+                return;
+            }
+        }
+    }
+
+    public void onActivatePlayer() {
+        bottomPlayerLayout.setVisibility(View.GONE);
+        bottomPlayerText.setTextColor(Color.parseColor("#e86f1c"));
+        bottomPlaylistsText.setTextColor(Color.WHITE);
+
+        bottomPlayerText.setCompoundDrawablesWithIntrinsicBounds(R.drawable.player_hover, 0, 0, 0);
+        bottomPlaylistsText.setCompoundDrawablesWithIntrinsicBounds(R.drawable.playlist, 0, 0, 0);
+    }
+
+    public void onActivatePlaylists() {
+        bottomPlayerLayout.setVisibility(View.VISIBLE);
+        bottomPlaylistsText.setTextColor(Color.parseColor("#e86f1c"));
+        bottomPlayerText.setTextColor(Color.WHITE);
+
+        bottomPlayerText.setCompoundDrawablesWithIntrinsicBounds(R.drawable.player, 0, 0, 0);
+        bottomPlaylistsText.setCompoundDrawablesWithIntrinsicBounds(R.drawable.playlist_hover, 0, 0, 0);
     }
 }

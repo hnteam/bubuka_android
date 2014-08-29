@@ -5,7 +5,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent" android:layout_height="match_parent">
     <fragment
-        android:id="@+id/fragment"
+        android:id="@+id/player_swipe_fragment"
+        android:tag="player_swipe_fragment"
         android:name="ru.espepe.bubuka.player.fragment.PlayerFragment"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

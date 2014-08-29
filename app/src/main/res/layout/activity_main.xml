@@ -6,16 +6,103 @@
     android:layout_height="match_parent"
     tools:context="ru.espepe.bubuka.player.MainActivity">
 
-    <FrameLayout
-        android:id="@+id/screen_fragment_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-    </FrameLayout>
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:id="@+id/player_panel"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true">
+
+            <LinearLayout
+                android:id="@+id/bottom_player_layout"
+                android:orientation="horizontal"
+                android:layout_width="fill_parent"
+                android:layout_height="48dp"
+                android:background="#eeeeee"
+                android:gravity="center_vertical"
+                android:visibility="gone">
+                <TextView
+                    android:id="@+id/bottom_player_current_track"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="18dp"
+                    android:layout_marginRight="18dp"
+                    android:text="Not playing"
+                    android:layout_weight="90" />
+
+                <ImageView
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/imageView"
+                    android:src="@drawable/plaing"
+                    android:layout_marginRight="8dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/controls_layout"
+                android:layout_width="fill_parent"
+                android:layout_height="48dp"
+                android:background="#373e46"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:layout_weight="50"
+                    android:gravity="center"
+                    android:id="@+id/botton_switcher_player">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:drawableLeft="@drawable/player_hover"
+                        android:text="Плеер"
+                        android:textColor="@color/main_orange"
+                        android:gravity="center"
+                        android:id="@+id/bottom_player_text" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:layout_weight="50"
+                    android:gravity="center"
+                    android:id="@+id/botton_switcher_playlists">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:drawableLeft="@drawable/playlist"
+                        android:gravity="center"
+                        android:text="Все плейлисты"
+                        android:textColor="#ffffff"
+                        android:id="@+id/bottom_playlists_text" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/screen_fragment_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@id/player_panel"></FrameLayout>
+
+
+    </RelativeLayout>
+
 
     <fragment
         android:id="@+id/main_navigation_fragment"
         android:name="ru.espepe.bubuka.player.fragment.NavigationFragment"
         android:layout_width="250dp"
         android:layout_height="match_parent"
-        android:layout_gravity="start" />
+        android:layout_gravity="start"
+        tools:layout="@layout/fragment_navigation" />
+
 </android.support.v4.widget.DrawerLayout>

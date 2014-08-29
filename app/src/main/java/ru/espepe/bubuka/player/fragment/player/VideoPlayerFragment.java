@@ -23,6 +23,7 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import ru.espepe.bubuka.player.BubukaApplication;
+import ru.espepe.bubuka.player.MainActivity;
 import ru.espepe.bubuka.player.R;
 import ru.espepe.bubuka.player.dao.StorageFile;
 import ru.espepe.bubuka.player.dao.StorageFileDao;
@@ -136,6 +137,7 @@ public class VideoPlayerFragment extends Fragment {
 
     private void updateTrackInfo() {
         titleView.setText(trackList.current().getName());
+        ((MainActivity)getActivity()).updatePlayer();
     }
 
     @OnClick(R.id.player_video_button_fullscreen)
@@ -212,6 +214,14 @@ public class VideoPlayerFragment extends Fragment {
 
             }
         });
+    }
+
+    public String getCurrentTrackInfo() {
+        if(videoView != null && videoView.isPlaying()) {
+            return trackList.current().getName();
+        }
+
+        return null;
     }
 
     private class ProgressTask extends AsyncTask<Void, Void, Void> {

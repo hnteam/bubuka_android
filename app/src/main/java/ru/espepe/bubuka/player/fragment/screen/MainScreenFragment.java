@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 
 import ru.espepe.bubuka.player.R;
 import ru.espepe.bubuka.player.fragment.MainFragment;
+import ru.espepe.bubuka.player.fragment.PlayerFragment;
 
 /**
  * Created by wolong on 13/08/14.
@@ -24,5 +25,10 @@ public class MainScreenFragment extends Fragment {
 
     public MainFragment getMainFragment() {
         return (MainFragment) getFragmentManager().findFragmentById(R.id.fragment_main);
+    }
+
+    public PlayerFragment getPlayerFragment() {
+        return (PlayerFragment) getFragmentManager().findFragmentByTag("player_swipe_fragment");
+        //return (PlayerFragment) getFragmentManager().findFragmentById(R.id.player_swipe_fragment);
     }
 }

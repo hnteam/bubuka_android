@@ -25,6 +25,7 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import ru.espepe.bubuka.player.BubukaApplication;
+import ru.espepe.bubuka.player.MainActivity;
 import ru.espepe.bubuka.player.R;
 import ru.espepe.bubuka.player.dao.StorageFile;
 import ru.espepe.bubuka.player.dao.StorageFileDao;
@@ -70,6 +71,8 @@ public class MusicPlayerFragment extends Fragment {
     private void updateTrackInfo() {
         artistView.setText(trackList.current().getArtist());
         titleView.setText(trackList.current().getTitle());
+
+        ((MainActivity)getActivity()).updatePlayer();
     }
 
     @InjectView(R.id.player_music_artist)
@@ -227,5 +230,13 @@ public class MusicPlayerFragment extends Fragment {
             timeLeftView.setText(String.format("%02d:%02d", progressMinuts, progressSeconds));
             timeRightView.setText(String.format("%02d:%02d", remainingMinuts, remainingSeconds));
         }
+    }
+
+    public String getCurrentTrackInfo() {
+        if(mediaPlayer != null && mediaPlayer.isPlaying()) {
+            return trackList.current().getTitle();
+        }
+
+        return null;
     }
 }
