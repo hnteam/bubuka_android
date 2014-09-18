@@ -5,4 +5,5 @@
     <!--padding android:left="10dp" android:right="10dp" android:top="10dp" android:bottom="10dp"/-->
     <!--solid android:color="#CCCCCC"/-->
     <stroke android:color="#CCCCCC" android:width="1px" />
+    <solid android:color="@android:color/transparent" />
 </shape>

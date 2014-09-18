@@ -159,146 +159,154 @@ public class Sync implements Runnable, OnSyncFileProgressListener {
         for(String fileType : fileTypes) {
             logger.info("retrieve {} sync list...", fileType);
             final SyncListFiles syncFiles = api.syncFiles(syncList.getDomains(), fileType);
+            final File syncDir = new File(baseDir, fileType);
 
             syncLists.put(fileType, syncFiles);
-            syncDirs.put(fileType, new File(baseDir, fileType));
+            syncDirs.put(fileType, syncDir);
+
+            if(!syncDir.exists()) {
+                syncDir.mkdirs();
+            }
         }
 
 
         logger.info("retrieving lists completed");
 
-        BubukaApplication.getInstance().getDaoSession().runInTx(new Runnable() {
-            @Override
-            public void run() {
-                logger.info("start transaction");
-                timelistDao.deleteAll();
-                playDao.deleteAll();
-                blockDao.deleteAll();
-                trackDao.deleteAll();
 
-                logger.info("all old data deleted, modify old storage files...");
+        daoSession.runInTx(new Runnable() {
+                                                                    @Override
+                                                                    public void run() {
+                                                                        logger.info("start transaction");
+                                                                        timelistDao.deleteAll();
+                                                                        playDao.deleteAll();
+                                                                        blockDao.deleteAll();
+                                                                        trackDao.deleteAll();
+                                                                    }
+                                                                });
 
-                final List<StorageFile> allFiles = storageFileDao.queryBuilder().list();
-                for(StorageFile storageFile : allFiles) {
-                    if(storageFile.getStatus().equals("pending")) {
-                        storageFileDao.delete(storageFile);
-                    } else if(storageFile.getStatus().equals("active")) {
-                        storageFile.setStatus("cache");
-                        storageFileDao.update(storageFile);
+        logger.info("all old data deleted, modify old storage files...");
+
+        final List<StorageFile> allFiles = storageFileDao.queryBuilder().build().forCurrentThread().list();
+        for(StorageFile storageFile : allFiles) {
+            if(storageFile.getStatus().equals("pending")) {
+                storageFileDao.deleteInTx(storageFile);
+            } else if(storageFile.getStatus().equals("active")) {
+                storageFile.setStatus("cache");
+                storageFileDao.updateInTx(storageFile);
+            }
+        }
+
+        logger.info("storage files depreceted");
+
+        Map<String, StorageFile> fileMap = new HashMap<String, StorageFile>();
+
+        for(String fileType : fileTypes) {
+            logger.info("processing sync list {}...", fileType);
+            final String fileDir = "./"+fileType+"/";
+            for(FileObject fileObject : syncLists.get(fileType).getObjects()) {
+                StorageFile storageFile = storageFileDao.queryBuilder().where(
+                        StorageFileDao.Properties.Type.eq(fileType),
+                        StorageFileDao.Properties.Identity.eq(fileObject.getId()),
+                        StorageFileDao.Properties.Version.eq(fileObject.getVersion())).build().forCurrentThread().unique();
+
+                if(storageFile == null) {
+                    storageFile = new StorageFile(null, fileType, fileObject.getId(), fileObject.getName(), fileObject.getPath(), fileObject.getVersion(), "pending");
+                    storageFileDao.insertInTx(storageFile);
+                } else {
+                    if(storageFile.getStatus().equals("cache")) {
+                        storageFile.setStatus("active");
                     }
+
+                    storageFileDao.updateInTx(storageFile);
                 }
 
-                logger.info("storage files depreceted");
+                fileMap.put(fileDir + storageFile.getPath(), storageFile);
+            }
+        }
 
-                Map<String, StorageFile> fileMap = new HashMap<String, StorageFile>();
+        logger.info("starting blocks processing");
+        // blocks processing
+        final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
 
-                for(String fileType : fileTypes) {
-                    logger.info("processing sync list {}...", fileType);
-                    final String fileDir = "./"+fileType+"/";
-                    for(FileObject fileObject : syncLists.get(fileType).getObjects()) {
-                        StorageFile storageFile = storageFileDao.queryBuilder().where(
-                                StorageFileDao.Properties.Type.eq(fileType),
-                                StorageFileDao.Properties.Identity.eq(fileObject.getId()),
-                                StorageFileDao.Properties.Version.eq(fileObject.getVersion())).unique();
+        Map<String, Block> blocks = new HashMap<String, Block>();
+        for(BlockPojo blockPojo : sppConfig.getBlocks().values()) {
+            Block block = new Block(null, blockPojo.getName(), blockPojo.getMediaDir(), blockPojo.getFading(), blockPojo.getLoop());
+            blockDao.insertInTx(block);
+            blocks.put(block.getName(), block);
 
-                        if(storageFile == null) {
-                            storageFile = new StorageFile(null, fileType, fileObject.getId(), fileObject.getName(), fileObject.getPath(), fileObject.getVersion(), "pending");
-                            storageFileDao.insert(storageFile);
+            logger.info("new block '{}' inserted", block.getName());
+
+            for(TrackPojo trackPojo : blockPojo.getTracks()) {
+                try {
+                    Date startDate = dateFormat.parse(trackPojo.getStartDate());
+                    Date endDate = dateFormat.parse(trackPojo.getEndDate());
+                    endDate.setTime(endDate.getTime() + 24 * 3600);
+
+
+                    if(trackPojo.getFile().equals("*")) {
+                        logger.info("process all tracks within block {}...", block.getMediadir());
+                        String mediaType = blockPojo.getMediaDir();
+                        for(Map.Entry<String, StorageFile> storageFileEntry : fileMap.entrySet()) {
+                            if(storageFileEntry.getKey().startsWith(mediaType)) {
+                                logger.info("storage file matched: {}", storageFileEntry.getKey());
+                                Track track = new Track(null, startDate, endDate, trackPojo.getFile(), block.getId(), storageFileEntry.getValue().getId());
+                                trackDao.insertInTx(track);
+                            }
+                        }
+                    } else {
+                        String virtualFilePath = block.getMediadir() + "/" + trackPojo.getFile();
+                        logger.info("search file: {}", virtualFilePath);
+                        StorageFile storageFile = fileMap.get(virtualFilePath);
+                        if(storageFile != null) {
+                            logger.info("storage file found, create track");
+                            Track track = new Track(null, startDate, endDate, trackPojo.getFile(), block.getId(), storageFile.getId());
+                            trackDao.insertInTx(track);
                         } else {
-                            if(storageFile.getStatus().equals("cache")) {
-                                storageFile.setStatus("active");
-                            }
-
-                            storageFileDao.update(storageFile);
-                        }
-
-                        fileMap.put(fileDir + storageFile.getPath(), storageFile);
-                    }
-                }
-
-                logger.info("starting blocks processing");
-                // blocks processing
-                final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
-
-                Map<String, Block> blocks = new HashMap<String, Block>();
-                for(BlockPojo blockPojo : sppConfig.getBlocks().values()) {
-                    Block block = new Block(null, blockPojo.getName(), blockPojo.getMediaDir(), blockPojo.getFading(), blockPojo.getLoop());
-                    blockDao.insert(block);
-                    blocks.put(block.getName(), block);
-
-                    logger.info("new block '{}' inserted", block.getName());
-
-                    for(TrackPojo trackPojo : blockPojo.getTracks()) {
-                        try {
-                            Date startDate = dateFormat.parse(trackPojo.getStartDate());
-                            Date endDate = dateFormat.parse(trackPojo.getEndDate());
-                            endDate.setTime(endDate.getTime() + 24 * 3600);
-
-
-                            if(trackPojo.getFile().equals("*")) {
-                                logger.info("process all tracks within block {}...", block.getMediadir());
-                                String mediaType = blockPojo.getMediaDir();
-                                for(Map.Entry<String, StorageFile> storageFileEntry : fileMap.entrySet()) {
-                                    if(storageFileEntry.getKey().startsWith(mediaType)) {
-                                        logger.info("storage file matched: {}", storageFileEntry.getKey());
-                                        Track track = new Track(null, startDate, endDate, trackPojo.getFile(), block.getId(), storageFileEntry.getValue().getId());
-                                        trackDao.insert(track);
-                                    }
-                                }
-                            } else {
-                                String virtualFilePath = block.getMediadir() + "/" + trackPojo.getFile();
-                                logger.info("search file: {}", virtualFilePath);
-                                StorageFile storageFile = fileMap.get(virtualFilePath);
-                                if(storageFile != null) {
-                                    logger.info("storage file found, create track");
-                                    Track track = new Track(null, startDate, endDate, trackPojo.getFile(), block.getId(), storageFile.getId());
-                                    trackDao.insert(track);
-                                } else {
-                                    logger.warn("storage file not found: {}", virtualFilePath);
-                                }
-                            }
-
-                        } catch (ParseException e) {
-                            logger.warn("invalid track date: {} - {}", trackPojo.getStartDate(), trackPojo.getEndDate());
+                            logger.warn("storage file not found: {}", virtualFilePath);
                         }
                     }
-                }
 
-                logger.info("processing timelists...");
-
-                for(TimeListPojo timeListPojo : sppConfig.getTimeLists().values()) {
-                    Timelist timelist = new Timelist(null, timeListPojo.getPriority(), timeListPojo.getName());
-                    timelistDao.insert(timelist);
-
-                    logger.info("inserted timelist: {}", timelist.getName());
-
-                    for(PlayPojo playPojo : timeListPojo.getPlayList()) {
-                        logger.info("process play object: {}", playPojo.getName());
-                        Block pairedBlock = blocks.get(playPojo.getBlock());
-                        if(pairedBlock == null) {
-                            logger.warn("failed to find block in play: {}", playPojo.getBlock());
-                            continue;
-                        }
-
-                        Play play = new Play(
-                                null,
-                                playPojo.getName(),
-                                playPojo.getVolume(),
-                                playPojo.getTimeMinuts(),
-                                playPojo.getFont(),
-                                playPojo.getFontnew(),
-                                playPojo.getAnim(),
-                                playPojo.getPeriod(),
-                                timelist.getId(),
-                                pairedBlock.getId());
-
-                        playDao.insert(play);
-                    }
+                } catch (ParseException e) {
+                    logger.warn("invalid track date: {} - {}", trackPojo.getStartDate(), trackPojo.getEndDate());
                 }
             }
-        });
+        }
 
-        final List<StorageFile> pendingFiles = storageFileDao.queryBuilder().where(StorageFileDao.Properties.Status.eq("pending")).list();
+        logger.info("processing timelists...");
+
+        for(TimeListPojo timeListPojo : sppConfig.getTimeLists().values()) {
+            Timelist timelist = new Timelist(null, timeListPojo.getPriority(), timeListPojo.getName());
+            timelistDao.insertInTx(timelist);
+
+            logger.info("inserted timelist: {}", timelist.getName());
+
+            for(PlayPojo playPojo : timeListPojo.getPlayList()) {
+                logger.info("process play object: {}", playPojo.getName());
+                Block pairedBlock = blocks.get(playPojo.getBlock());
+                if(pairedBlock == null) {
+                    logger.warn("failed to find block in play: {}", playPojo.getBlock());
+                    continue;
+                }
+
+                Play play = new Play(
+                        null,
+                        playPojo.getName(),
+                        playPojo.getVolume(),
+                        playPojo.getTimeMinuts(),
+                        playPojo.getFont(),
+                        playPojo.getFontnew(),
+                        playPojo.getAnim(),
+                        playPojo.getPeriod(),
+                        timelist.getId(),
+                        pairedBlock.getId());
+
+                playDao.insertInTx(play);
+            }
+        }
+        //    }
+        //});
+
+        final List<StorageFile> pendingFiles = storageFileDao.queryBuilder().where(StorageFileDao.Properties.Status.eq("pending"), StorageFileDao.Properties.Type.eq("music")).list();
         logger.info("files in pending state: {}", pendingFiles.size());
 
         final String objectCode = BubukaApplication.getInstance().getObjectCode();
@@ -312,7 +320,7 @@ public class Sync implements Runnable, OnSyncFileProgressListener {
             if(request.runSync()) {
                 logger.info("sync file completed successfully");
                 storageFile.setStatus("active");
-                storageFileDao.update(storageFile);
+                storageFileDao.updateInTx(storageFile);
             } else {
                 throw new Exception("failed to download file");
             }

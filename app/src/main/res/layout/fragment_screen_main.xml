@@ -27,4 +27,29 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         tools:layout="@layout/fragment_main" />
+
+    <!--fragment
+    android:id="@+id/player_swipe_fragment"
+    android:tag="player_swipe_fragment"
+    android:name="ru.espepe.bubuka.player.fragment.PlayerFragment"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignParentBottom="true"
+    android:layout_alignParentLeft="true"
+    android:layout_alignParentStart="true"
+    tools:layout="@layout/fragment_player"
+    android:layout_below="@+id/fragment_main" />
+
+    <fragment
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:name="ru.espepe.bubuka.player.fragment.MainFragment"
+    android:id="@+id/fragment_main"
+    android:layout_alignParentTop="true"
+    android:layout_alignParentRight="true"
+    android:layout_alignParentEnd="true"
+    android:layout_alignParentLeft="true"
+    android:layout_alignParentStart="true"
+    tools:layout="@layout/fragment_main" /-->
+
 </RelativeLayout>

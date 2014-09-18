@@ -1,5 +1,6 @@
 package ru.espepe.bubuka.player.fragment;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.database.DataSetObserver;
@@ -26,7 +27,7 @@ import ru.espepe.bubuka.player.pojo.PlayList;
 /**
  * Created by wolong on 27/08/14.
  */
-public class CurrentPlaylistFragment extends Fragment {
+public class CurrentPlaylistFragment extends Fragment implements BubukaApplication.OnCurrentPlaylist {
     public static CurrentPlaylistFragment newInstance(String type) {
         CurrentPlaylistFragment fragment = new CurrentPlaylistFragment();
         Bundle args = new Bundle();
@@ -57,7 +58,19 @@ public class CurrentPlaylistFragment extends Fragment {
 
     protected PlaylistTrackAdapter adapter;
 
+    public void changeType(String type) {
+        getArguments().putString("type", type);
+        Activity activity = getActivity();
+        if(activity != null) {
+            updateUi(getActivity());
+        }
+    }
+
     private void setupUi(Context context) {
+        updateUi(context);
+    }
+
+    private void updateUi(Context context) {
         String type = getArguments().getString("type");
 
         adapter = new PlaylistTrackAdapter(context, type);
@@ -79,11 +92,15 @@ public class CurrentPlaylistFragment extends Fragment {
             }
         });
 
-        PlayList currentPlaylist = BubukaApplication.getInstance().getCurrentPlayList(type);
-        if(currentPlaylist != null) {
-            currentPlaylistName.setText(currentPlaylist.getName());
-        }
+        BubukaApplication.getInstance().getCurrentPlayList(type, this);
 
         adapter.updatePlaylists();
+    }
+
+
+
+    @Override
+    public void onPlaylist(PlayList playList) {
+        currentPlaylistName.setText(playList.getName());
     }
 }

@@ -7,15 +7,14 @@
     <fragment
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-
         android:id="@+id/player_swipe_fragment"
         android:name="ru.espepe.bubuka.player.fragment.PlayerFragment"
 
         android:layout_weight="50"
         tools:layout="@layout/fragment_player"
         android:layout_above="@+id/fragment_main"
-        android:layout_toLeftOf="@+id/frameLayout"
-        android:layout_toStartOf="@+id/frameLayout" />
+        android:layout_toLeftOf="@+id/main_playlist_layout"
+        android:layout_toStartOf="@+id/main_playlist_layout" />
 
     <fragment
         android:layout_width="match_parent"
@@ -27,8 +26,30 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_toLeftOf="@+id/frameLayout"
-        android:layout_toStartOf="@+id/frameLayout" />
+        android:layout_toLeftOf="@+id/main_playlist_layout"
+        android:layout_toStartOf="@+id/main_playlist_layout" />
+
+    <!--FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/fragment_main_container"
+        android:layout_toLeftOf="@+id/main_playlist_layout"
+        android:layout_toStartOf="@+id/main_playlist_layout"
+        android:id="@+id/player_swipe_fragment_container"
+        tools:layout="@layout/fragment_player"
+        ></FrameLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/fragment_main_container"
+        tools:layout="@layout/fragment_main"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_toLeftOf="@+id/main_playlist_layout"
+        android:layout_toStartOf="@+id/main_playlist_layout"
+        ></FrameLayout-->
 
     <FrameLayout
         android:layout_width="350dp"
@@ -36,6 +57,7 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
-        android:id="@+id/frameLayout"
+        tools:layout="@layout/"
+        android:id="@+id/main_playlist_layout"
         android:background="#aaaaaa"></FrameLayout>
 </RelativeLayout>

@@ -37,11 +37,12 @@ public class FragmentStateArrayPagerAdapter extends FragmentStatePagerAdapter {
         return name == null ? "NONAME" : name;
     }
 
-    @Override
+    @Override @SuppressWarnings("NewApi")
     public void destroyItem(ViewGroup container, int position, Object object) {
         Fragment fragment = (Fragment) object;
-        fm.saveFragmentInstanceState(fragment);
-
+        try {
+            fragment.setUserVisibleHint(true);
+        } catch (Throwable e) {}
         super.destroyItem(container, position, object);
     }
 }

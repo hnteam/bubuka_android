@@ -15,10 +15,12 @@ import org.acra.annotation.ReportsCrashes;
 import org.acra.sender.HttpSender;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import ru.espepe.bubuka.player.adapter.PlaylistTrackAdapter;
 import ru.espepe.bubuka.player.dao.DaoMaster;
 import ru.espepe.bubuka.player.dao.DaoSession;
 import ru.espepe.bubuka.player.pojo.PlayList;
@@ -247,6 +249,10 @@ public class BubukaApplication extends Application {
                     currentPlayLists.put("music", playList);
                     currentPlayLists.put("video", playList);
                     currentPlayLists.put("photo", playList);
+
+                    callPlaylistsCallbacks("music");
+                    callPlaylistsCallbacks("video");
+                    callPlaylistsCallbacks("photo");
                     return;
                 }
             }
@@ -254,18 +260,24 @@ public class BubukaApplication extends Application {
             for(PlayList playList : musicPlaylists) {
                 if(playList.isActive()) {
                     currentPlayLists.put("music", playList);
+
+                    callPlaylistsCallbacks("music");
                 }
             }
 
             for(PlayList playList : videoPlaylists) {
                 if(playList.isActive()) {
                     currentPlayLists.put("video", playList);
+
+                    callPlaylistsCallbacks("video");
                 }
             }
 
             for(PlayList playList : slidePlaylists) {
                 if(playList.isActive()) {
                     currentPlayLists.put("photo", playList);
+
+                    callPlaylistsCallbacks("photo");
                 }
             }
         }
@@ -281,7 +293,37 @@ public class BubukaApplication extends Application {
         return true;
     }
 
-    public PlayList getCurrentPlayList(String type) {
-        return currentPlayLists.get(type);
+    private Map<String, List<OnCurrentPlaylist>> currentPlaylistObservers = new HashMap<String, List<OnCurrentPlaylist>>();
+
+    public void callPlaylistsCallbacks(String type) {
+        List<OnCurrentPlaylist> callbacks = currentPlaylistObservers.remove(type);
+        PlayList playList = currentPlayLists.get(type);
+        if(playList != null && callbacks != null) {
+            for(OnCurrentPlaylist callback : callbacks) {
+                callback.onPlaylist(playList);
+            }
+        }
+    }
+
+    public void getCurrentPlayList(String type, OnCurrentPlaylist callback) {
+        PlayList playlist = currentPlayLists.get(type);
+        if(playlist != null) {
+            callback.onPlaylist(playlist);
+        } else {
+            if(currentPlaylistObservers.containsKey(type)) {
+                currentPlaylistObservers.get(type).add(callback);
+            } else {
+                List<OnCurrentPlaylist> callbacks = new ArrayList<OnCurrentPlaylist>();
+                callbacks.add(callback);
+                currentPlaylistObservers.put(type, callbacks);
+            }
+
+        }
+    }
+
+
+
+    public static interface OnCurrentPlaylist {
+        void onPlaylist(PlayList playList);
     }
 }

@@ -16,6 +16,8 @@ import android.widget.TextView;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
+import butterknife.Optional;
+import ru.espepe.bubuka.player.activity.FullScreenActivity;
 import ru.espepe.bubuka.player.adapter.NavigationAdapter;
 import ru.espepe.bubuka.player.fragment.MainFragment;
 import ru.espepe.bubuka.player.fragment.NavigationFragment;
@@ -171,6 +173,7 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
                 onActivatePlaylists();
                 break;
             case OBJECT_SELECTION:
+                startActivity(new Intent(this, FullScreenActivity.class));
                 break;
         }
 
@@ -198,26 +201,26 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
         }
     }
 
-    @InjectView(R.id.bottom_player_layout)
+    @InjectView(R.id.bottom_player_layout) @Optional
     protected LinearLayout bottomPlayerLayout;
 
-    @InjectView(R.id.bottom_player_text)
+    @InjectView(R.id.bottom_player_text) @Optional
     protected TextView bottomPlayerText;
 
-    @InjectView(R.id.bottom_playlists_text)
+    @InjectView(R.id.bottom_playlists_text) @Optional
     protected TextView bottomPlaylistsText;
 
-    @InjectView(R.id.bottom_player_current_track)
+    @InjectView(R.id.bottom_player_current_track) @Optional
     protected TextView bottomPlayerCurrentTrack;
 
-    @OnClick(R.id.botton_switcher_player)
+    @OnClick(R.id.botton_switcher_player) @Optional
     public void activatePlayer() {
         gotoFragment(mainScreenFragment);
         onActivatePlayer();
         updatePlayer();
     }
 
-    @OnClick(R.id.botton_switcher_playlists)
+    @OnClick(R.id.botton_switcher_playlists) @Optional
     public void activatePlaylists() {
         gotoFragment(playlistsScreenFragment);
         onActivatePlaylists();
@@ -241,20 +244,24 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
     }
 
     public void onActivatePlayer() {
-        bottomPlayerLayout.setVisibility(View.GONE);
-        bottomPlayerText.setTextColor(Color.parseColor("#e86f1c"));
-        bottomPlaylistsText.setTextColor(Color.WHITE);
+        if(bottomPlayerLayout != null) {
+            bottomPlayerLayout.setVisibility(View.GONE);
+            bottomPlayerText.setTextColor(Color.parseColor("#e86f1c"));
+            bottomPlaylistsText.setTextColor(Color.WHITE);
 
-        bottomPlayerText.setCompoundDrawablesWithIntrinsicBounds(R.drawable.player_hover, 0, 0, 0);
-        bottomPlaylistsText.setCompoundDrawablesWithIntrinsicBounds(R.drawable.playlist, 0, 0, 0);
+            bottomPlayerText.setCompoundDrawablesWithIntrinsicBounds(R.drawable.player_hover, 0, 0, 0);
+            bottomPlaylistsText.setCompoundDrawablesWithIntrinsicBounds(R.drawable.playlist, 0, 0, 0);
+        }
     }
 
     public void onActivatePlaylists() {
-        bottomPlayerLayout.setVisibility(View.VISIBLE);
-        bottomPlaylistsText.setTextColor(Color.parseColor("#e86f1c"));
-        bottomPlayerText.setTextColor(Color.WHITE);
+        if(bottomPlayerLayout != null) {
+            bottomPlayerLayout.setVisibility(View.VISIBLE);
+            bottomPlaylistsText.setTextColor(Color.parseColor("#e86f1c"));
+            bottomPlayerText.setTextColor(Color.WHITE);
 
-        bottomPlayerText.setCompoundDrawablesWithIntrinsicBounds(R.drawable.player, 0, 0, 0);
-        bottomPlaylistsText.setCompoundDrawablesWithIntrinsicBounds(R.drawable.playlist_hover, 0, 0, 0);
+            bottomPlayerText.setCompoundDrawablesWithIntrinsicBounds(R.drawable.player, 0, 0, 0);
+            bottomPlaylistsText.setCompoundDrawablesWithIntrinsicBounds(R.drawable.playlist_hover, 0, 0, 0);
+        }
     }
 }

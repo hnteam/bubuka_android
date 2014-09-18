@@ -15,7 +15,6 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import de.greenrobot.dao.query.QueryBuilder;
-import de.greenrobot.dao.query.WhereCondition;
 import ru.espepe.bubuka.player.BubukaApplication;
 import ru.espepe.bubuka.player.MainActivity;
 import ru.espepe.bubuka.player.R;
@@ -26,7 +25,6 @@ import ru.espepe.bubuka.player.helper.ProgressBackgroundDrawable;
 import ru.espepe.bubuka.player.pojo.SyncStatus;
 import ru.espepe.bubuka.player.service.sync.SyncFileProgressReport;
 import ru.espepe.bubuka.player.service.sync.SyncProgressReport;
-import ru.espepe.bubuka.player.service.sync.SyncTask;
 
 /**
  * Created by wolong on 11/08/14.
@@ -41,16 +39,21 @@ public class MainFragment extends Fragment {
         return fragment;
     }
 
-    private void startActivityPlaylist(String type) {
-        Intent intent = new Intent(getActivity(), CurrentPlaylistActivity.class);
-        intent.putExtra("type", type);
-        startActivity(intent);
+    private void openCurrentPlaylist(String type) {
+        CurrentPlaylistFragment fragment = (CurrentPlaylistFragment) getFragmentManager().findFragmentByTag(CurrentPlaylistFragment.class.getSimpleName());
+        if(fragment != null) {
+            fragment.changeType(type);
+        } else {
+            Intent intent = new Intent(getActivity(), CurrentPlaylistActivity.class);
+            intent.putExtra("type", type);
+            startActivity(intent);
+        }
     }
 
-    @OnClick(R.id.clips_counter_block) void showClips() { startActivityPlaylist("clip"); }
-    @OnClick(R.id.photo_counter_block) void showPhoto() { startActivityPlaylist("photo"); }
-    @OnClick(R.id.video_counter_block) void showVideo() { startActivityPlaylist("video"); }
-    @OnClick(R.id.music_counter_block) void showMusic() { startActivityPlaylist("music"); }
+    @OnClick(R.id.clips_counter_block) void showClips() { openCurrentPlaylist("clip"); }
+    @OnClick(R.id.photo_counter_block) void showPhoto() { openCurrentPlaylist("photo"); }
+    @OnClick(R.id.video_counter_block) void showVideo() { openCurrentPlaylist("video"); }
+    @OnClick(R.id.music_counter_block) void showMusic() { openCurrentPlaylist("music"); }
 
     @InjectView(R.id.clips_counter) TextView clipCounter;
     @InjectView(R.id.photo_counter) TextView photoCounter;
@@ -70,13 +73,21 @@ public class MainFragment extends Fragment {
     }
 
     public void receiveSyncProgress(SyncProgressReport report) {
+        if(syncStatusLine == null) {
+            return;
+        }
         String type = report.getType();
         if(type.equals("start")) {
             syncStatusLine.setText("Синхронизация...");
         } else if(type.equals("stop")) {
             updateSyncStatusView();
+            updateView();
         } else if(type.equals("progress")) {
+            boolean needUpdateCounters = false;
             for (SyncFileProgressReport fileReport : report.getFilesInProgress()) {
+                if(fileReport.type.equals("stop")) {
+                    needUpdateCounters = true;
+                }
                 if (fileReport.fileType.equals("video")) {
                     setProgress(videoCounterBlock, fileReport);
                 } else if (fileReport.fileType.equals("music")) {
@@ -87,9 +98,12 @@ public class MainFragment extends Fragment {
                     setProgress(clipCounterBlock, fileReport);
                 }
             }
+            if(needUpdateCounters) {
+                updateView();
+            }
         }
 
-        updateView();
+
     }
 
     private void setProgress(View view, SyncFileProgressReport report) {

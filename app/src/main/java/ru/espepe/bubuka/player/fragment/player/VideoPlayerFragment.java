@@ -1,11 +1,14 @@
 package ru.espepe.bubuka.player.fragment.player;
 
 import android.app.Fragment;
+import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
@@ -25,11 +28,13 @@ import butterknife.OnClick;
 import ru.espepe.bubuka.player.BubukaApplication;
 import ru.espepe.bubuka.player.MainActivity;
 import ru.espepe.bubuka.player.R;
+import ru.espepe.bubuka.player.activity.FullScreenActivity;
 import ru.espepe.bubuka.player.dao.StorageFile;
 import ru.espepe.bubuka.player.dao.StorageFileDao;
 import ru.espepe.bubuka.player.log.Logger;
 import ru.espepe.bubuka.player.log.LoggerFactory;
 import ru.espepe.bubuka.player.parts.TrackList;
+import ru.espepe.bubuka.player.service.PlayerService;
 
 /**
  * Created by wolong on 12/08/14.
@@ -63,18 +68,19 @@ public class VideoPlayerFragment extends Fragment {
     protected TextView titleView;
 
     @InjectView(R.id.player_video_view)
-    protected VideoView videoView;
+    protected SurfaceView videoView;
 
     @InjectView(R.id.player_video_button_play)
     protected ImageButton playButton;
 
     @OnClick(R.id.player_video_button_play)
     protected void play() {
-        if(videoView.isPlaying()) {
-            videoView.pause();
+        MediaPlayer videoPlayer = PlayerService.getInstance().getVideoPlayer();
+        if(videoPlayer.isPlaying()) {
+            videoPlayer.pause();
             playButton.setImageResource(R.drawable.video_play_button);
         } else if(trackList != null) {
-            videoView.start();
+            videoPlayer.start();
             playButton.setImageResource(R.drawable.video_pause_button);
             updateProgressTask();
         } else {
@@ -106,15 +112,24 @@ public class VideoPlayerFragment extends Fragment {
     }
 
     private void changeTrack() {
-        videoView.stopPlayback();
+        MediaPlayer videoPlayer = PlayerService.getInstance().getVideoPlayer();
+
+        /*
         try {
-            videoView.setVideoURI(trackList.current().getUri());
+            videoPlayer.stop();
+        } catch (Exception e) {}
+
+        try {
+            videoPlayer.setDa(trackList.current().getUri());
         } catch (Exception e) {
             logger.warn("change track error", e);
         }
         videoView.start();
+        */
 
-        videoView.setOnCompletionListener(completionListener);
+        PlayerService.getInstance().startVideo(trackList.current());
+
+        videoPlayer.setOnCompletionListener(completionListener);
         updateTrackInfo();
         updateProgressTask();
     }
@@ -142,7 +157,7 @@ public class VideoPlayerFragment extends Fragment {
 
     @OnClick(R.id.player_video_button_fullscreen)
     protected void fullscreen() {
-
+        startActivity(new Intent(getActivity(), FullScreenActivity.class));
     }
 
     protected void videoClick() {
@@ -185,6 +200,7 @@ public class VideoPlayerFragment extends Fragment {
         return view;
     }
 
+
     private void setupUi() {
         videoView.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -199,7 +215,7 @@ public class VideoPlayerFragment extends Fragment {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 try {
                     if(fromUser) {
-                        videoView.seekTo(progress);
+                        ///videoView.seekTo(progress);
                     }
                 } catch (Exception e) {}
             }
@@ -214,12 +230,31 @@ public class VideoPlayerFragment extends Fragment {
 
             }
         });
+
+        videoView.getHolder().addCallback(new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder holder) {
+                PlayerService.getInstance().setDisplay(holder);
+            }
+
+            @Override
+            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+                PlayerService.getInstance().setDisplay(holder);
+            }
+
+            @Override
+            public void surfaceDestroyed(SurfaceHolder holder) {
+
+            }
+        });
     }
 
     public String getCurrentTrackInfo() {
+        /*
         if(videoView != null && videoView.isPlaying()) {
             return trackList.current().getName();
         }
+        */
 
         return null;
     }
@@ -245,9 +280,12 @@ public class VideoPlayerFragment extends Fragment {
 
         @Override
         protected void onProgressUpdate(Void... values) {
+            return;
+            /*
             if(!videoView.isPlaying()) {
                 return;
             }
+
 
             final int duration = videoView.getDuration();
             final int progress = videoView.getCurrentPosition();
@@ -268,6 +306,7 @@ public class VideoPlayerFragment extends Fragment {
 
             timeLeftView.setText(String.format("%02d:%02d", progressMinuts, progressSeconds));
             timeRightView.setText(String.format("%02d:%02d", remainingMinuts, remainingSeconds));
+            */
         }
     }
 }

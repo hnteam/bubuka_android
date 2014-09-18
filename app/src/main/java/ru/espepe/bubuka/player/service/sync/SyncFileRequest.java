@@ -65,7 +65,7 @@ public class SyncFileRequest {
                 int contentLength = urlConnection.getContentLength();
                 InputStream inputStream = urlConnection.getInputStream();
 
-                byte[] buffer = new byte[4096];
+                byte[] buffer = new byte[1024 * 128];
                 int len = inputStream.read(buffer, 0, buffer.length);
                 int downloaded = 0;
                 int lastChunkReported = 0;
@@ -76,12 +76,14 @@ public class SyncFileRequest {
 
                     cryptoStream.write(buffer, 0, len);
                     downloaded += len;
-                    if(downloaded / 10000 > lastChunkReported) {
-                        logger.info("downloaded {} bytes", MainHelper.humanReadableByteCountOld(downloaded, false));
-                        lastChunkReported = downloaded / 100000;
+                    int chunkNumber = downloaded / 1000000;
+                    if(chunkNumber > lastChunkReported) {
+                        logger.info("downloaded {} bytes, chunk {}", MainHelper.humanReadableByteCountOld(downloaded, false), chunkNumber);
+                        lastChunkReported = chunkNumber;
 
                         listener.onFileProgress(new SyncFileProgressReport("progress", type, contentLength, downloaded));
                     }
+
                     len = inputStream.read(buffer, 0, buffer.length);
 
                     if(Thread.currentThread().isInterrupted()) {

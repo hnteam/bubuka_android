@@ -18,6 +18,7 @@ import android.widget.Toast;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
+import ru.espepe.bubuka.player.activity.RegisterActivity;
 
 /**
  * Created by wolong on 26/08/14.
@@ -54,6 +55,7 @@ public class LoginActivity extends Activity {
         alert.show();
         */
 
+        /*
         Dialog dialog = new Dialog(this);
         dialog.setTitle("Регистрация демо-объекта");
         dialog.setContentView(R.layout.dialog_register_demo);
@@ -72,7 +74,10 @@ public class LoginActivity extends Activity {
         });
         webView.loadUrl("http://bubuka.espepe.ru/users/demoplayer/");
 
-        dialog.show();
+        dialog.show()
+        */
+
+        startActivity(new Intent(this, RegisterActivity.class));
 
     }
 
