@@ -41,7 +41,7 @@ public class MainScreenFragment extends Fragment {
             getFragmentManager().beginTransaction().replace(R.id.main_playlist_layout, getCurrentPlaylistFragment(), CurrentPlaylistFragment.class.getSimpleName()).commit();
         }
 
-        /*
+
 
         View playerSwipeFragmentContainer = view.findViewById(R.id.player_swipe_fragment_container);
         if(playerSwipeFragmentContainer != null) {
@@ -53,7 +53,7 @@ public class MainScreenFragment extends Fragment {
             getFragmentManager().beginTransaction().replace(R.id.fragment_main_container, mainFragment).commit();
         }
 
-        */
+
 
         return view;
     }

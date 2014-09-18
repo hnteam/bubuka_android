@@ -13,6 +13,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 
+import java.util.ArrayList;
+import java.util.List;
+
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
@@ -40,12 +43,13 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
     private NavigationFragment navigationFragment;
 
     // screen fragments
+    /*
     private MainScreenFragment mainScreenFragment;
     private PlaylistsScreenFragment playlistsScreenFragment;
     private TimeTableScreenFragment timeTableScreenFragment;
     private AboutScreenFragment aboutScreenFragment;
     private SettingsScreenFragment settingsScreenFragment;
-
+    */
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,17 +67,45 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
 
         DrawerLayout drawerLayout = (DrawerLayout) findViewById(R.id.main_drawer_layout);
 
+
         if(drawerLayout != null) {
             navigationFragment = (NavigationFragment) getFragmentManager().findFragmentById(R.id.main_navigation_fragment);
             navigationFragment.setUp(R.id.main_navigation_fragment, drawerLayout);
         }
 
+        if(savedInstanceState != null) {
+            String[] fragmentNames = new String[] {
+                    MainScreenFragment.class.getSimpleName(),
+                    PlaylistsScreenFragment.class.getSimpleName(),
+                    TimeTableScreenFragment.class.getSimpleName(),
+                    AboutScreenFragment.class.getSimpleName(),
+                    SettingsScreenFragment.class.getSimpleName()
+            };
 
-        mainScreenFragment = new MainScreenFragment();
-        playlistsScreenFragment = new PlaylistsScreenFragment();
-        timeTableScreenFragment = new TimeTableScreenFragment();
-        aboutScreenFragment = new AboutScreenFragment();
-        settingsScreenFragment = new SettingsScreenFragment();
+            List<Fragment> activeFragments = new ArrayList<Fragment>();
+            for(String fragmentName : fragmentNames) {
+                Fragment fragment = getFragmentManager().findFragmentByTag(fragmentName);
+                if(fragment != null) {
+                    activeFragments.add(fragment);
+                }
+            }
+
+            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+            for(Fragment fragment : activeFragments) {
+                transaction.hide(fragment);
+            }
+
+            transaction.commit();
+            
+            gotoFragment(MainScreenFragment.class);
+            return;
+        }
+
+        MainScreenFragment mainScreenFragment = new MainScreenFragment();
+        PlaylistsScreenFragment playlistsScreenFragment = new PlaylistsScreenFragment();
+        TimeTableScreenFragment timeTableScreenFragment = new TimeTableScreenFragment();
+        AboutScreenFragment aboutScreenFragment = new AboutScreenFragment();
+        SettingsScreenFragment settingsScreenFragment = new SettingsScreenFragment();
 
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
         transaction
@@ -138,38 +170,38 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
 
     @Override
     public void onMenuItemClick(NavigationAdapter.MenuItemId id) {
-        Fragment targetFragment = null;
+        Class<? extends Fragment> targetFragment = null;
         switch (id) {
             case CURRENT_PLAY:
-                targetFragment = mainScreenFragment;
+                targetFragment = MainScreenFragment.class;
                 onActivatePlayer();
                 break;
             case MY_FAST_TRACKS:
-                targetFragment = mainScreenFragment;
+                targetFragment = MainScreenFragment.class;
                 onActivatePlayer();
                 break;
             case MUSIC:
-                targetFragment = playlistsScreenFragment;
+                targetFragment = PlaylistsScreenFragment.class;
                 onActivatePlaylists();
                 break;
             case VIDEO:
-                targetFragment = playlistsScreenFragment;
+                targetFragment = PlaylistsScreenFragment.class;
                 onActivatePlaylists();
                 break;
             case PHOTO:
-                targetFragment = playlistsScreenFragment;
+                targetFragment = PlaylistsScreenFragment.class;
                 onActivatePlaylists();
                 break;
             case PLAYLISTS_BY_TIME:
-                targetFragment = timeTableScreenFragment;
+                targetFragment = TimeTableScreenFragment.class;
                 onActivatePlaylists();
                 break;
             case SETTINS:
-                targetFragment = settingsScreenFragment;
+                targetFragment = SettingsScreenFragment.class;
                 onActivatePlaylists();
                 break;
             case ABOUT:
-                targetFragment = aboutScreenFragment;
+                targetFragment = AboutScreenFragment.class;
                 onActivatePlaylists();
                 break;
             case OBJECT_SELECTION:
@@ -184,7 +216,7 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
 
     @Override
     public void onBackPressed() {
-        gotoFragment(mainScreenFragment);
+        gotoFragment(MainScreenFragment.class);
     }
 
     public void startSync() {
@@ -193,6 +225,7 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
 
     @Override
     public void onProgress(SyncProgressReport progressReport) {
+        MainScreenFragment mainScreenFragment = (MainScreenFragment) getFragmentManager().findFragmentByTag(MainScreenFragment.class.getSimpleName());
         if(mainScreenFragment != null) {
             MainFragment mainFragment = mainScreenFragment.getMainFragment();
             if(mainFragment != null) {
@@ -215,30 +248,33 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
 
     @OnClick(R.id.botton_switcher_player) @Optional
     public void activatePlayer() {
-        gotoFragment(mainScreenFragment);
+        gotoFragment(MainScreenFragment.class);
         onActivatePlayer();
         updatePlayer();
     }
 
     @OnClick(R.id.botton_switcher_playlists) @Optional
     public void activatePlaylists() {
-        gotoFragment(playlistsScreenFragment);
+        gotoFragment(PlaylistsScreenFragment.class);
         onActivatePlaylists();
     }
 
     public void updatePlayer() {
-        PlayerFragment playerFragment = mainScreenFragment.getPlayerFragment();
-        if(playerFragment != null) {
-            String musicTrackInfo = playerFragment.getCurrentMusicTrackInfo();
-            if(musicTrackInfo != null) {
-                bottomPlayerCurrentTrack.setText(musicTrackInfo);
-                return;
-            }
+        MainScreenFragment mainScreenFragment = (MainScreenFragment) getFragmentManager().findFragmentByTag(MainScreenFragment.class.getSimpleName());
+        if(mainScreenFragment != null) {
+            PlayerFragment playerFragment = mainScreenFragment.getPlayerFragment();
+            if (playerFragment != null) {
+                String musicTrackInfo = playerFragment.getCurrentMusicTrackInfo();
+                if (musicTrackInfo != null) {
+                    bottomPlayerCurrentTrack.setText(musicTrackInfo);
+                    return;
+                }
 
-            String videoTrackInfo = playerFragment.getCurrentVideoTrackInfo();
-            if(videoTrackInfo != null) {
-                bottomPlayerCurrentTrack.setText(videoTrackInfo);
-                return;
+                String videoTrackInfo = playerFragment.getCurrentVideoTrackInfo();
+                if (videoTrackInfo != null) {
+                    bottomPlayerCurrentTrack.setText(videoTrackInfo);
+                    return;
+                }
             }
         }
     }
