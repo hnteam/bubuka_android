@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.app.Fragment;
 import android.os.Handler;
 import android.support.v13.app.FragmentStatePagerAdapter;
+import android.support.v4.content.FileProvider;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.PagerTabStrip;
 import android.support.v4.view.PagerTitleStrip;
@@ -17,6 +18,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+
+import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -27,6 +30,9 @@ import ru.espepe.bubuka.player.fragment.player.MusicPlayerFragment;
 import ru.espepe.bubuka.player.fragment.player.VideoPlayerFragment;
 import ru.espepe.bubuka.player.log.Logger;
 import ru.espepe.bubuka.player.log.LoggerFactory;
+import ru.espepe.bubuka.player.service.PlayerService;
+import ru.espepe.bubuka.player.service.sync.SyncFileProgressReport;
+import ru.espepe.bubuka.player.service.sync.SyncProgressReport;
 
 public class PlayerFragment extends Fragment {
     private static final Logger logger = LoggerFactory.getLogger(PlayerFragment.class);
@@ -49,6 +55,27 @@ public class PlayerFragment extends Fragment {
     private FastAudioPlayerFragment fastAudioFragment;
     private VideoPlayerFragment videoPlayerFragment;
     private MusicPlayerFragment musicPlayerFragment;
+
+    public void receiveSyncProgress(SyncProgressReport progressReport) {
+        if(progressReport != null) {
+            if("progress".equals(progressReport.getType())) {
+                List<SyncFileProgressReport> files = progressReport.getFilesInProgress();
+                if(files != null && !files.isEmpty()) {
+                    boolean needToTryStart = false;
+                    for(SyncFileProgressReport report : files) {
+                        if(report.type.equals("stop") && report.fileType.equals("music")) {
+                            needToTryStart = true;
+                        }
+                    }
+
+                    if(needToTryStart) {
+                        //musicPlayerFragment.startPlayIfAvailable();
+                        PlayerService.getInstance().startIfNeeded();
+                    }
+                }
+            }
+        }
+    }
 
     private static class Page {
         Fragment fragment;
@@ -82,7 +109,7 @@ public class PlayerFragment extends Fragment {
         adapter = new PagesAdapter(getFragmentManager());
         playerPager.setAdapter(adapter);
 
-        pagerTitleStrip.setTabIndicatorColor(Color.parseColor("#e86f1c"));
+        pagerTitleStrip.setTabIndicatorColor(getResources().getColor(R.color.main_orange));
 
 
         return view;

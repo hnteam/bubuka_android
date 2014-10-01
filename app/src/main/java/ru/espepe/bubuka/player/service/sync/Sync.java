@@ -8,6 +8,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -90,7 +91,9 @@ public class Sync implements Runnable, OnSyncFileProgressListener {
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    listener.onProgress(progressReport);
+                    if(listener != null) {
+                        listener.onProgress(progressReport);
+                    }
                 }
             });
         }
@@ -306,7 +309,8 @@ public class Sync implements Runnable, OnSyncFileProgressListener {
         //    }
         //});
 
-        final List<StorageFile> pendingFiles = storageFileDao.queryBuilder().where(StorageFileDao.Properties.Status.eq("pending"), StorageFileDao.Properties.Type.eq("music")).list();
+        final List<StorageFile> pendingFiles = storageFileDao.queryBuilder().where(StorageFileDao.Properties.Status.eq("pending")).list();
+
         logger.info("files in pending state: {}", pendingFiles.size());
 
         final String objectCode = BubukaApplication.getInstance().getObjectCode();

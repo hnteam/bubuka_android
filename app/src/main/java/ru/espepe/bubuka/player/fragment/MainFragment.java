@@ -82,6 +82,7 @@ public class MainFragment extends Fragment {
         } else if(type.equals("stop")) {
             updateSyncStatusView();
             updateView();
+
         } else if(type.equals("progress")) {
             boolean needUpdateCounters = false;
             for (SyncFileProgressReport fileReport : report.getFilesInProgress()) {

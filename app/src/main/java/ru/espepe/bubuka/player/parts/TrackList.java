@@ -1,6 +1,7 @@
 package ru.espepe.bubuka.player.parts;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import ru.espepe.bubuka.player.dao.StorageFile;
@@ -15,6 +16,8 @@ public class TrackList {
         for(StorageFile storageFile : storageFileList) {
             self.tracks.add(PlayableTrack.from(storageFile));
         }
+
+        Collections.shuffle(self.tracks);
 
         self.currentTrack = 0;
 

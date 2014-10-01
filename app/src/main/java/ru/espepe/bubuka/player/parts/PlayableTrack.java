@@ -27,6 +27,10 @@ public class PlayableTrack {
         return self;
     }
 
+    public String getFilename() {
+        return filename;
+    }
+
     public String getUriString() {
         return "http://127.0.0.1:" + HttpServer.SERVER_PORT + "/" + type + "/" + filename;
     }

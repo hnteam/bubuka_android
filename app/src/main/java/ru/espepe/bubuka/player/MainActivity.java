@@ -30,26 +30,21 @@ import ru.espepe.bubuka.player.fragment.screen.MainScreenFragment;
 import ru.espepe.bubuka.player.fragment.screen.PlaylistsScreenFragment;
 import ru.espepe.bubuka.player.fragment.screen.SettingsScreenFragment;
 import ru.espepe.bubuka.player.fragment.screen.TimeTableScreenFragment;
+import ru.espepe.bubuka.player.helper.MenuItemId;
+import ru.espepe.bubuka.player.helper.OnMenuItemListener;
 import ru.espepe.bubuka.player.log.Logger;
 import ru.espepe.bubuka.player.log.LoggerFactory;
+import ru.espepe.bubuka.player.pojo.SyncStatus;
+import ru.espepe.bubuka.player.service.PlayerService;
 import ru.espepe.bubuka.player.service.sync.OnSyncProgressListener;
 import ru.espepe.bubuka.player.service.sync.SyncProgressReport;
 import ru.espepe.bubuka.player.service.sync.SyncTask;
 
 
-public class MainActivity extends Activity implements NavigationAdapter.OnMenuItemListener, OnSyncProgressListener {
+public class MainActivity extends Activity implements OnMenuItemListener, OnSyncProgressListener {
     private static final Logger logger = LoggerFactory.getLogger(MainActivity.class);
 
     private NavigationFragment navigationFragment;
-
-    // screen fragments
-    /*
-    private MainScreenFragment mainScreenFragment;
-    private PlaylistsScreenFragment playlistsScreenFragment;
-    private TimeTableScreenFragment timeTableScreenFragment;
-    private AboutScreenFragment aboutScreenFragment;
-    private SettingsScreenFragment settingsScreenFragment;
-    */
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,8 +57,9 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
         }
 
         setContentView(R.layout.activity_main);
-        //getActionBar().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#e86f1c")));
         ButterKnife.inject(this);
+
+        BubukaApplication.getInstance().setSyncListener(this);
 
         DrawerLayout drawerLayout = (DrawerLayout) findViewById(R.id.main_drawer_layout);
 
@@ -96,7 +92,7 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
             }
 
             transaction.commit();
-            
+
             gotoFragment(MainScreenFragment.class);
             return;
         }
@@ -130,10 +126,14 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
 
         gotoFragment(mainScreenFragment);
 
-        BubukaApplication.getInstance().setSyncListener(this);
 
         //startSync();
 
+        if(BubukaApplication.getInstance().getSyncStatus().getType() == SyncStatus.SyncStatusType.NOT_RUNNING) {
+            startSync();
+        }
+
+            PlayerService.getInstance().start();
     }
 
 
@@ -169,7 +169,7 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
     }
 
     @Override
-    public void onMenuItemClick(NavigationAdapter.MenuItemId id) {
+    public void onMenuItemClick(MenuItemId id) {
         Class<? extends Fragment> targetFragment = null;
         switch (id) {
             case CURRENT_PLAY:
@@ -205,7 +205,7 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
                 onActivatePlaylists();
                 break;
             case OBJECT_SELECTION:
-                startActivity(new Intent(this, FullScreenActivity.class));
+                //startActivity(new Intent(this, FullScreenActivity.class));
                 break;
         }
 
@@ -230,6 +230,11 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
             MainFragment mainFragment = mainScreenFragment.getMainFragment();
             if(mainFragment != null) {
                 mainFragment.receiveSyncProgress(progressReport);
+            }
+
+            PlayerFragment playerFragment = mainScreenFragment.getPlayerFragment();
+            if(playerFragment != null) {
+                playerFragment.receiveSyncProgress(progressReport);
             }
         }
     }
@@ -266,13 +271,17 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
             if (playerFragment != null) {
                 String musicTrackInfo = playerFragment.getCurrentMusicTrackInfo();
                 if (musicTrackInfo != null) {
-                    bottomPlayerCurrentTrack.setText(musicTrackInfo);
+                    if(bottomPlayerCurrentTrack != null) {
+                        bottomPlayerCurrentTrack.setText(musicTrackInfo);
+                    }
                     return;
                 }
 
                 String videoTrackInfo = playerFragment.getCurrentVideoTrackInfo();
                 if (videoTrackInfo != null) {
-                    bottomPlayerCurrentTrack.setText(videoTrackInfo);
+                    if(bottomPlayerCurrentTrack != null) {
+                        bottomPlayerCurrentTrack.setText(videoTrackInfo);
+                    }
                     return;
                 }
             }
@@ -282,7 +291,7 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
     public void onActivatePlayer() {
         if(bottomPlayerLayout != null) {
             bottomPlayerLayout.setVisibility(View.GONE);
-            bottomPlayerText.setTextColor(Color.parseColor("#e86f1c"));
+            bottomPlayerText.setTextColor(getResources().getColor(R.color.main_orange));
             bottomPlaylistsText.setTextColor(Color.WHITE);
 
             bottomPlayerText.setCompoundDrawablesWithIntrinsicBounds(R.drawable.player_hover, 0, 0, 0);
@@ -293,7 +302,7 @@ public class MainActivity extends Activity implements NavigationAdapter.OnMenuIt
     public void onActivatePlaylists() {
         if(bottomPlayerLayout != null) {
             bottomPlayerLayout.setVisibility(View.VISIBLE);
-            bottomPlaylistsText.setTextColor(Color.parseColor("#e86f1c"));
+            bottomPlaylistsText.setTextColor(getResources().getColor(R.color.main_orange));
             bottomPlayerText.setTextColor(Color.WHITE);
 
             bottomPlayerText.setCompoundDrawablesWithIntrinsicBounds(R.drawable.player, 0, 0, 0);

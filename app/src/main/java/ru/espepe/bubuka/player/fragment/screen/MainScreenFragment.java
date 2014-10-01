@@ -59,13 +59,13 @@ public class MainScreenFragment extends Fragment {
     }
 
     public MainFragment getMainFragment() {
-        //return mainFragment;
-        return (MainFragment) getFragmentManager().findFragmentById(R.id.fragment_main);
+        return mainFragment;
+        //return (MainFragment) getFragmentManager().findFragmentById(R.id.fragment_main);
     }
 
     public PlayerFragment getPlayerFragment() {
-        //return playerFragment;
-        return (PlayerFragment) getFragmentManager().findFragmentByTag("player_swipe_fragment");
+        return playerFragment;
+        //return (PlayerFragment) getFragmentManager().findFragmentByTag("player_swipe_fragment");
         //return (PlayerFragment) getFragmentManager().findFragmentById(R.id.player_swipe_fragment);
     }
 }

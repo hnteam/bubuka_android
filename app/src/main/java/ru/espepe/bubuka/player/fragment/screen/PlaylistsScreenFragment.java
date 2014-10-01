@@ -44,7 +44,7 @@ public class PlaylistsScreenFragment extends Fragment {
         adapter = new FragmentStateArrayPagerAdapter(getFragmentManager(), new MusicPlaylistGridFragment(), new PhotoPlaylistGridFragment(), new VideoPlaylistGridFragment());
         playlistViewPager.setAdapter(adapter);
         playlistTabs.setViewPager(playlistViewPager);
-        playlistTabs.setIndicatorColor(Color.parseColor("#e86f1c"));
+        playlistTabs.setIndicatorColor(getResources().getColor(R.color.main_orange));
 
     }
 }

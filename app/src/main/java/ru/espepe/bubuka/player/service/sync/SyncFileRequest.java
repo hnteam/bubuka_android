@@ -76,7 +76,7 @@ public class SyncFileRequest {
 
                     cryptoStream.write(buffer, 0, len);
                     downloaded += len;
-                    int chunkNumber = downloaded / 1000000;
+                    int chunkNumber = downloaded / 100000;
                     if(chunkNumber > lastChunkReported) {
                         logger.info("downloaded {} bytes, chunk {}", MainHelper.humanReadableByteCountOld(downloaded, false), chunkNumber);
                         lastChunkReported = chunkNumber;

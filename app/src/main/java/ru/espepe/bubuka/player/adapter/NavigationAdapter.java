@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ru.espepe.bubuka.player.R;
+import ru.espepe.bubuka.player.helper.MenuItemId;
+import ru.espepe.bubuka.player.helper.OnMenuItemListener;
 
 /**
  * Created by wolong on 11/08/14.
@@ -18,19 +20,6 @@ import ru.espepe.bubuka.player.R;
 public class NavigationAdapter extends BaseAdapter {
     private final Context context;
     private final OnMenuItemListener listener;
-
-    public static enum MenuItemId {
-        CURRENT_PLAY,
-        MY_FAST_TRACKS,
-        MUSIC,
-        PHOTO,
-        VIDEO,
-        PLAYLISTS_BY_TIME,
-        SETTINS,
-        ABOUT,
-        OBJECT_SELECTION
-    }
-
 
     public NavigationAdapter(Context context, OnMenuItemListener listener) {
         this.context = context;
@@ -52,10 +41,6 @@ public class NavigationAdapter extends BaseAdapter {
                 new NavigationItemSection("example@postmail.ru"),
                 new NavigationItemEntity(context.getString(R.string.menu_object_selection), MenuItemId.OBJECT_SELECTION),
         };
-    }
-
-    public static interface OnMenuItemListener {
-        void onMenuItemClick(MenuItemId id);
     }
 
     private void handleMenuClick(MenuItemId id) {

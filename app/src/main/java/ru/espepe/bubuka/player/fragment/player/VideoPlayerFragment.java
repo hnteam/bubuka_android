@@ -1,8 +1,8 @@
 package ru.espepe.bubuka.player.fragment.player;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
-import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -17,20 +17,12 @@ import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.VideoView;
-
-import java.io.IOException;
-import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
-import ru.espepe.bubuka.player.BubukaApplication;
-import ru.espepe.bubuka.player.MainActivity;
 import ru.espepe.bubuka.player.R;
 import ru.espepe.bubuka.player.activity.FullScreenActivity;
-import ru.espepe.bubuka.player.dao.StorageFile;
-import ru.espepe.bubuka.player.dao.StorageFileDao;
 import ru.espepe.bubuka.player.log.Logger;
 import ru.espepe.bubuka.player.log.LoggerFactory;
 import ru.espepe.bubuka.player.parts.TrackList;
@@ -39,7 +31,7 @@ import ru.espepe.bubuka.player.service.PlayerService;
 /**
  * Created by wolong on 12/08/14.
  */
-public class VideoPlayerFragment extends Fragment {
+public class VideoPlayerFragment extends Fragment implements PlayerService.PlayerListener {
     private static final Logger logger = LoggerFactory.getLogger(VideoPlayerFragment.class);
 
     public static VideoPlayerFragment newInstance() {
@@ -75,85 +67,19 @@ public class VideoPlayerFragment extends Fragment {
 
     @OnClick(R.id.player_video_button_play)
     protected void play() {
-        MediaPlayer videoPlayer = PlayerService.getInstance().getVideoPlayer();
-        if(videoPlayer.isPlaying()) {
-            videoPlayer.pause();
-            playButton.setImageResource(R.drawable.video_play_button);
-        } else if(trackList != null) {
-            videoPlayer.start();
-            playButton.setImageResource(R.drawable.video_pause_button);
-            updateProgressTask();
-        } else {
-            List<StorageFile> files = BubukaApplication.getInstance().getDaoSession().getStorageFileDao().queryBuilder().where(StorageFileDao.Properties.Type.eq("video")).list();
-            if(files.size() > 0) {
-                trackList = TrackList.from(files);
-                changeTrack();
-                playButton.setImageResource(R.drawable.video_pause_button);
-            }
-        }
+        PlayerService.getInstance().onPauseVideo();
     }
 
     @OnClick(R.id.player_video_button_next)
     protected void next() {
-        if(trackList != null) {
-            if(trackList.next()) {
-                changeTrack();
-            }
-        }
+        PlayerService.getInstance().onVideoNext();
     }
 
     @OnClick(R.id.player_video_button_prev)
     protected void prev() {
-        if(trackList != null) {
-            if(trackList.prev()) {
-                changeTrack();
-            }
-        }
+        PlayerService.getInstance().onVideoPrev();
     }
 
-    private void changeTrack() {
-        MediaPlayer videoPlayer = PlayerService.getInstance().getVideoPlayer();
-
-        /*
-        try {
-            videoPlayer.stop();
-        } catch (Exception e) {}
-
-        try {
-            videoPlayer.setDa(trackList.current().getUri());
-        } catch (Exception e) {
-            logger.warn("change track error", e);
-        }
-        videoView.start();
-        */
-
-        PlayerService.getInstance().startVideo(trackList.current());
-
-        videoPlayer.setOnCompletionListener(completionListener);
-        updateTrackInfo();
-        updateProgressTask();
-    }
-
-    private MediaPlayer.OnCompletionListener completionListener = new MediaPlayer.OnCompletionListener() {
-        @Override
-        public void onCompletion(MediaPlayer mp) {
-
-        }
-    };
-
-    private void updateProgressTask() {
-        if(progressTask != null) {
-            progressTask.cancel(true);
-        }
-
-        progressTask = new ProgressTask();
-        progressTask.execute(null, null, null);
-    }
-
-    private void updateTrackInfo() {
-        titleView.setText(trackList.current().getName());
-        ((MainActivity)getActivity()).updatePlayer();
-    }
 
     @OnClick(R.id.player_video_button_fullscreen)
     protected void fullscreen() {
@@ -200,6 +126,17 @@ public class VideoPlayerFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        PlayerService.getInstance().setVideoPlayerListener(this);
+    }
+
+    @Override
+    public void onDetach() {
+        PlayerService.getInstance().removeVideoPlayerListener(this);
+        super.onDetach();
+    }
 
     private void setupUi() {
         videoView.setOnTouchListener(new View.OnTouchListener() {
@@ -215,7 +152,7 @@ public class VideoPlayerFragment extends Fragment {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 try {
                     if(fromUser) {
-                        ///videoView.seekTo(progress);
+                        PlayerService.getInstance().onVideoSeek(progress);
                     }
                 } catch (Exception e) {}
             }
@@ -247,6 +184,18 @@ public class VideoPlayerFragment extends Fragment {
 
             }
         });
+
+        if(PlayerService.getInstance().isVideoPlaying()) {
+            playButton.setImageResource(R.drawable.video_pause_button);
+        } else {
+            playButton.setImageResource(R.drawable.video_play_button);
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        PlayerService.getInstance().removeDisplay(videoView.getHolder());
+        super.onDestroyView();
     }
 
     public String getCurrentTrackInfo() {
@@ -257,6 +206,41 @@ public class VideoPlayerFragment extends Fragment {
         */
 
         return null;
+    }
+
+    @Override
+    public void onTrack(String name, String subname) {
+        if(name == null) {
+            name = "unknown";
+        }
+
+        if(titleView != null) {
+            titleView.setText(name);
+        }
+    }
+
+    @Override
+    public void onProgress(int duration, int position) {
+        if(seekBar == null || timeLeftView == null || timeRightView == null) {
+            return;
+        }
+
+        final int remaining = duration - position;
+
+        seekBar.setMax(duration);
+        seekBar.setProgress(position);
+
+        int progressSeconds = position / 1000;
+        int remainingSeconds = remaining / 1000;
+
+        int progressMinuts = progressSeconds / 60;
+        progressSeconds = progressSeconds % 60;
+
+        int remainingMinuts = remainingSeconds / 60;
+        remainingSeconds = remainingSeconds % 60;
+
+        timeLeftView.setText(String.format("%02d:%02d", progressMinuts, progressSeconds));
+        timeRightView.setText(String.format("%02d:%02d", remainingMinuts, remainingSeconds));
     }
 
     private class ProgressTask extends AsyncTask<Void, Void, Void> {
@@ -307,6 +291,20 @@ public class VideoPlayerFragment extends Fragment {
             timeLeftView.setText(String.format("%02d:%02d", progressMinuts, progressSeconds));
             timeRightView.setText(String.format("%02d:%02d", remainingMinuts, remainingSeconds));
             */
+        }
+    }
+
+    @Override
+    public void onMediaPlay() {
+        if(playButton != null) {
+            playButton.setImageResource(R.drawable.video_pause_button);
+        }
+    }
+
+    @Override
+    public void onMediaPause() {
+        if(playButton != null) {
+            playButton.setImageResource(R.drawable.video_play_button);
         }
     }
 }

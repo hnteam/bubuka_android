@@ -32,11 +32,12 @@ import ru.espepe.bubuka.player.dao.StorageFileDao;
 import ru.espepe.bubuka.player.fragment.PlayerFragment;
 import ru.espepe.bubuka.player.parts.TrackList;
 import ru.espepe.bubuka.player.service.HttpServer;
+import ru.espepe.bubuka.player.service.PlayerService;
 
 /**
  * Created by wolong on 12/08/14.
  */
-public class MusicPlayerFragment extends Fragment {
+public class MusicPlayerFragment extends Fragment implements PlayerService.PlayerListener {
     public static MusicPlayerFragment newInstance() {
         MusicPlayerFragment fragment = new MusicPlayerFragment();
         Bundle args = new Bundle();
@@ -44,36 +45,7 @@ public class MusicPlayerFragment extends Fragment {
         return fragment;
     }
 
-    private TrackList trackList;
-    private ProgressTask progressTask;
 
-
-
-    private void updateProgressTask() {
-        if(progressTask != null) {
-            progressTask.cancel(true);
-        }
-
-        progressTask = new ProgressTask();
-        progressTask.execute(null, null, null);
-    }
-
-    private MediaPlayer.OnCompletionListener completionListener = new MediaPlayer.OnCompletionListener() {
-        @Override
-        public void onCompletion(MediaPlayer mp) {
-            if(trackList.next()) {
-                changeTrack();
-            }
-        }
-    };
-
-
-    private void updateTrackInfo() {
-        artistView.setText(trackList.current().getArtist());
-        titleView.setText(trackList.current().getTitle());
-
-        ((MainActivity)getActivity()).updatePlayer();
-    }
 
     @InjectView(R.id.player_music_artist)
     protected TextView artistView;
@@ -93,56 +65,19 @@ public class MusicPlayerFragment extends Fragment {
     @InjectView(R.id.player_music_button_play)
     protected ImageButton playButton;
 
-
     @OnClick(R.id.player_music_button_play)
-    public void onPlay() {
-        if(mediaPlayer.isPlaying()) {
-            mediaPlayer.pause();
-            playButton.setImageResource(R.drawable.play_button);
-        } else if(trackList != null) {
-            mediaPlayer.start();
-            updateProgressTask();
-            playButton.setImageResource(R.drawable.pause_button);
-        } else {
-            List<StorageFile> files = BubukaApplication.getInstance().getDaoSession().getStorageFileDao().queryBuilder().where(StorageFileDao.Properties.Type.eq("music")).list();
-            if(files.size() > 0) {
-                trackList = TrackList.from(files);
-                changeTrack();
-                playButton.setImageResource(R.drawable.pause_button);
-            }
-        }
+    public void onPlayClick() {
+        PlayerService.getInstance().onPauseMusic();
     }
 
     @OnClick(R.id.player_music_button_prev)
     public void onPrev() {
-        if(trackList != null) {
-            if(trackList.prev()) {
-                changeTrack();
-            }
-        }
+        PlayerService.getInstance().onMusicPrev();
     }
 
     @OnClick(R.id.player_music_button_next)
     public void onNext() {
-        if(trackList != null) {
-            if(trackList.next()) {
-                changeTrack();
-            }
-        }
-    }
-
-    private void changeTrack() {
-        try {
-            mediaPlayer.reset();
-            mediaPlayer.setDataSource(getActivity(), trackList.current().getUri());
-            mediaPlayer.prepare();
-            mediaPlayer.start();
-            mediaPlayer.setOnCompletionListener(completionListener);
-            updateTrackInfo();
-            updateProgressTask();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        PlayerService.getInstance().onMusicNext();
     }
 
     @Override
@@ -153,15 +88,18 @@ public class MusicPlayerFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+    }
+
     private void setupUi() {
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                try {
-                    if(fromUser) {
-                        mediaPlayer.seekTo(progress);
-                    }
-                } catch (Exception e) {}
+                if(fromUser) {
+                    PlayerService.getInstance().onMusicSeek(progress);
+                }
             }
 
             @Override
@@ -174,24 +112,30 @@ public class MusicPlayerFragment extends Fragment {
 
             }
         });
+
+
+        if(PlayerService.getInstance().isMusicPlaying()) {
+            playButton.setImageResource(R.drawable.pause_button);
+        } else {
+            playButton.setImageResource(R.drawable.play_button);
+        }
     }
 
 
-    MediaPlayer mediaPlayer;
 
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        mediaPlayer = new MediaPlayer();
+        PlayerService.getInstance().setMusicPlayerListener(this);
     }
 
     @Override
     public void onDetach() {
+        PlayerService.getInstance().removeMusicPlayerListener(this);
         super.onDetach();
-        mediaPlayer.reset();
-        mediaPlayer.release();
     }
 
+    /*
     private class ProgressTask extends AsyncTask<Void, Void, Void> {
 
         @Override
@@ -231,12 +175,71 @@ public class MusicPlayerFragment extends Fragment {
             timeRightView.setText(String.format("%02d:%02d", remainingMinuts, remainingSeconds));
         }
     }
+    */
+
 
     public String getCurrentTrackInfo() {
+        /*
         if(mediaPlayer != null && mediaPlayer.isPlaying()) {
             return trackList.current().getTitle();
         }
+        */
 
         return null;
     }
+
+    @Override
+    public void onTrack(String name, String subname) {
+        if(name == null) {
+            name = "unknown";
+        }
+
+        if(subname == null) {
+            subname = "unknown";
+        }
+
+        if(titleView != null && artistView != null) {
+            titleView.setText(name);
+            artistView.setText(subname);
+        }
+    }
+
+    @Override
+    public void onProgress(int duration, int position) {
+        if(seekBar == null || timeRightView == null || timeLeftView == null) {
+            return;
+        }
+
+        final int remaining = duration - position;
+
+        seekBar.setMax(duration);
+        seekBar.setProgress(position);
+
+        int progressSeconds = position / 1000;
+        int remainingSeconds = remaining / 1000;
+
+        int progressMinuts = progressSeconds / 60;
+        progressSeconds = progressSeconds % 60;
+
+        int remainingMinuts = remainingSeconds / 60;
+        remainingSeconds = remainingSeconds % 60;
+
+        timeLeftView.setText(String.format("%02d:%02d", progressMinuts, progressSeconds));
+        timeRightView.setText(String.format("%02d:%02d", remainingMinuts, remainingSeconds));
+    }
+
+    @Override
+    public void onMediaPlay() {
+        if(playButton != null) {
+            playButton.setImageResource(R.drawable.pause_button);
+        }
+    }
+
+    @Override
+    public void onMediaPause() {
+        if(playButton != null) {
+            playButton.setImageResource(R.drawable.play_button);
+        }
+    }
+
 }

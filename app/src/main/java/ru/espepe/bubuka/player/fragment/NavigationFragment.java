@@ -15,10 +15,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 
-import butterknife.ButterKnife;
-import butterknife.InjectView;
 import ru.espepe.bubuka.player.R;
 import ru.espepe.bubuka.player.adapter.NavigationAdapter;
+import ru.espepe.bubuka.player.adapter.NavigationTableAdapter;
+import ru.espepe.bubuka.player.helper.MenuItemId;
+import ru.espepe.bubuka.player.helper.OnMenuItemListener;
 
 /**
  * Created by wolong on 11/08/14.
@@ -53,13 +54,18 @@ public class NavigationFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_navigation, null);
         listView = (ListView) view.findViewById(R.id.navigation_list_view);
-        listView.setAdapter(new NavigationAdapter(inflater.getContext(), new NavigationAdapter.OnMenuItemListener() {
-            @Override
-            public void onMenuItemClick(NavigationAdapter.MenuItemId id) {
-                hide();
-                ((NavigationAdapter.OnMenuItemListener) getActivity()).onMenuItemClick(id);
-            }
-        }));
+        if(listView == null) {
+            listView = (ListView) view.findViewById(R.id.navigation_list_view_tablet);
+            listView.setAdapter(new NavigationTableAdapter(inflater.getContext(), (OnMenuItemListener) getActivity()));
+        } else {
+            listView.setAdapter(new NavigationAdapter(inflater.getContext(), new OnMenuItemListener() {
+                @Override
+                public void onMenuItemClick(MenuItemId id) {
+                    hide();
+                    ((OnMenuItemListener) getActivity()).onMenuItemClick(id);
+                }
+            }));
+        }
         return view;
     }
 

@@ -52,7 +52,7 @@ public class PlayPojo extends PojoObject {
         }
 
         String[] parts = time.split(":");
-        if(parts.length != 2) {
+        if(parts.length != 2 && parts.length != 3) {
             return null;
         }
 

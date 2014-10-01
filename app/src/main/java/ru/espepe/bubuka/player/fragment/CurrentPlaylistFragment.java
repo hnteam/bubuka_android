@@ -79,7 +79,7 @@ public class CurrentPlaylistFragment extends Fragment implements BubukaApplicati
             trackList.setVisibility(View.INVISIBLE);
             trackGrid.setVisibility(View.VISIBLE);
             trackGrid.setAdapter(adapter);
-        } else if(type.equals("music")) {
+        } else if(type.equals("music") || type.equals("clip")) {
             trackGrid.setVisibility(View.INVISIBLE);
             trackList.setVisibility(View.VISIBLE);
             trackList.setAdapter(adapter);
